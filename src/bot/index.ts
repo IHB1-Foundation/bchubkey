@@ -6,6 +6,7 @@ import { handleSetup } from './commands/setup.js';
 import { handleSettings } from './commands/settings.js';
 import { handleCallbackQuery } from './callbacks/index.js';
 import { handleWizardTextInput } from './wizard/handlers.js';
+import { handleVerifyTextInput } from '../verify/handlers.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { createChildLogger } from '../util/logger.js';
 
@@ -32,8 +33,15 @@ export function createBot(): Telegraf {
   // Register callback query handler
   telegraf.on('callback_query', handleCallbackQuery);
 
-  // Register text message handler for wizard input
-  telegraf.on('text', handleWizardTextInput);
+  // Register text message handler (verification flow first, then wizard)
+  telegraf.on('text', async (ctx) => {
+    // Try verification flow first
+    const handledByVerify = await handleVerifyTextInput(ctx);
+    if (handledByVerify) return;
+
+    // Then try wizard flow
+    await handleWizardTextInput(ctx);
+  });
 
   logger.info('Bot handlers registered');
 

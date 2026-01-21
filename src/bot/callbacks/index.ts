@@ -2,6 +2,7 @@ import type { Context } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { handleSetupWizardCallback } from './setupWizard.js';
 import { handleWizardCallback } from '../wizard/handlers.js';
+import { handleVerifyCallback } from './verify.js';
 
 const logger = createChildLogger('bot:callbacks');
 
@@ -13,6 +14,8 @@ export type CallbackAction =
   | 'wizard_confirm'
   | 'wizard_cancel'
   | 'wizard_use_defaults'
+  | 'verify_proceed'
+  | 'verify_change_address'
   | 'verify_sent'
   | 'verify_refresh'
   | 'verify_cancel'
@@ -59,19 +62,12 @@ export async function handleCallbackQuery(ctx: Context) {
         await handleWizardCallback(ctx, parsed.action, parsed.data);
         break;
 
+      case 'verify_proceed':
+      case 'verify_change_address':
       case 'verify_sent':
-        // Will be implemented in T-022
-        await ctx.answerCbQuery('Verification check coming soon!');
-        break;
-
       case 'verify_refresh':
-        // Will be implemented in T-022
-        await ctx.answerCbQuery('Refreshing...');
-        break;
-
       case 'verify_cancel':
-        // Will be implemented in T-022
-        await ctx.answerCbQuery('Verification cancelled');
+        await handleVerifyCallback(ctx, parsed.action, parsed.data);
         break;
 
       case 'noop':
