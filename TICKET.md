@@ -354,8 +354,8 @@
     - [x] User can always identify current step and the next action
     - [x] Expired/stuck flows provide a clear one-tap recovery path
 
-### T-073: Micro-tx instruction “card” (QR + copy-friendly formatting)
-- Status: TODO
+### T-073: Micro-tx instruction "card" (QR + copy-friendly formatting)
+- Status: DONE
 - Priority: P0
 - Goal: Make ownership proof instructions look premium and reduce user mistakes.
 - Tasks:
@@ -364,9 +364,9 @@
     - Add reminders for common pitfalls (exact sats, must send *from* claimed address, wallet caveats)
     - Provide graceful fallback when QR generation fails
 - Acceptance Criteria:
-    - [ ] Users receive a QR image for the micro-tx step (or a clear fallback)
-    - [ ] Address and amount are presented in a format that’s easy to copy
-    - [ ] “Wrong amount / wrong source address” guidance is present and concise
+    - [x] Users receive a QR image for the micro-tx step (or a clear fallback)
+    - [x] Address and amount are presented in a format that's easy to copy
+    - [x] "Wrong amount / wrong source address" guidance is present and concise
 
 ### T-074: Token metadata “delight” (name/symbol/icon surfaced)
 - Status: TODO

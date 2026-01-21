@@ -1,7 +1,8 @@
 import type { Context } from 'telegraf';
-import { Markup } from 'telegraf';
+import { Markup, Input } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { prisma } from '../../db/client.js';
+import type { VerifySession } from '../../generated/prisma/client.js';
 import {
   getVerifyFlowState,
   updateVerifyFlowState,
@@ -11,6 +12,7 @@ import {
   createVerifySession,
   getActiveSession,
   formatSessionInstructions,
+  formatSessionInstructionsWithQR,
 } from '../../verify/session.js';
 import {
   MessageBuilder,
@@ -20,6 +22,51 @@ import {
 } from '../util/messages.js';
 
 const logger = createChildLogger('bot:callback:verify');
+
+const VERIFY_BUTTONS = Markup.inlineKeyboard([
+  [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
+  [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
+  [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
+]);
+
+/**
+ * Sends session instructions with QR code if available.
+ * Falls back to text-only if QR generation fails.
+ */
+async function sendSessionInstructionsWithQR(ctx: Context, session: VerifySession): Promise<void> {
+  try {
+    const { text, qrBuffer } = await formatSessionInstructionsWithQR(session);
+
+    if (qrBuffer) {
+      // Delete the original message first (edit can't switch to photo)
+      try {
+        await ctx.deleteMessage();
+      } catch {
+        // Ignore if message can't be deleted
+      }
+
+      // Send QR image with caption
+      await ctx.replyWithPhoto(Input.fromBuffer(qrBuffer, 'verification-qr.png'), {
+        caption: text,
+        parse_mode: 'Markdown',
+        ...VERIFY_BUTTONS,
+      });
+    } else {
+      // Fallback: text only
+      await ctx.editMessageText(text, {
+        parse_mode: 'Markdown',
+        ...VERIFY_BUTTONS,
+      });
+    }
+  } catch (error) {
+    logger.warn({ error, sessionId: session.id }, 'Failed to send QR, falling back to text');
+    // Fallback: text only
+    await ctx.editMessageText(formatSessionInstructions(session), {
+      parse_mode: 'Markdown',
+      ...VERIFY_BUTTONS,
+    });
+  }
+}
 
 export async function handleVerifyCallback(ctx: Context, action: string, data: string[]) {
   const userId = ctx.from?.id?.toString();
@@ -104,14 +151,7 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
       sessionId: existingSession.id,
     });
 
-    await ctx.editMessageText(formatSessionInstructions(existingSession), {
-      parse_mode: 'Markdown',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
-        [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
-        [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
-      ]),
-    });
+    await sendSessionInstructionsWithQR(ctx, existingSession);
     return;
   }
 
@@ -142,15 +182,8 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
     sessionId: result.session.id,
   });
 
-  // Show instructions
-  await ctx.editMessageText(formatSessionInstructions(result.session), {
-    parse_mode: 'Markdown',
-    ...Markup.inlineKeyboard([
-      [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
-      [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
-      [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
-    ]),
-  });
+  // Show instructions with QR
+  await sendSessionInstructionsWithQR(ctx, result.session);
 
   logger.info(
     { userId, groupId: targetGroupId, sessionId: result.session.id },

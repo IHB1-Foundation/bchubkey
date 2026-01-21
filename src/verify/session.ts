@@ -1,6 +1,7 @@
 import { randomInt } from 'crypto';
 import { prisma } from '../db/client.js';
 import { createChildLogger } from '../util/logger.js';
+import { generateQRCodeBuffer, generatePaymentURI } from '../util/qr.js';
 import type { VerifySession } from '../generated/prisma/client.js';
 
 const logger = createChildLogger('verify:session');
@@ -152,6 +153,53 @@ export async function expireSession(sessionId: string): Promise<void> {
   });
 }
 
+export interface SessionInstructionsResult {
+  text: string;
+  qrBuffer: Buffer | null;
+  paymentUri: string;
+}
+
+export async function formatSessionInstructionsWithQR(
+  session: VerifySession
+): Promise<SessionInstructionsResult> {
+  const expiresIn = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 60000));
+  const truncatedAddress =
+    session.address.length > 34 ? `${session.address.slice(0, 30)}...` : session.address;
+
+  // Generate payment URI and QR code
+  const paymentUri = generatePaymentURI(session.verificationAddress, session.amountSat);
+  const qrBuffer = await generateQRCodeBuffer(paymentUri);
+
+  const qrNote = qrBuffer
+    ? '_Scan the QR code above or copy the address below._'
+    : '_Copy the address and amount below._';
+
+  const text = [
+    `*Step 2 of 3: Ownership Proof*`,
+    ``,
+    qrNote,
+    ``,
+    `*Amount:* \`${session.amountSat}\` satoshis`,
+    ``,
+    `*Send to:*`,
+    `\`${session.verificationAddress}\``,
+    ``,
+    `*From your address:*`,
+    `\`${truncatedAddress}\``,
+    ``,
+    `*Time remaining:* ${expiresIn} min`,
+    ``,
+    `*Common mistakes to avoid:*`,
+    `• Wrong amount: must be exactly ${session.amountSat} sats`,
+    `• Wrong source: must send *from* your claimed address`,
+    `• Use Electron Cash or standard P2PKH wallet`,
+    ``,
+    `_Click "I've Sent It" after sending._`,
+  ].join('\n');
+
+  return { text, qrBuffer, paymentUri };
+}
+
 export function formatSessionInstructions(session: VerifySession): string {
   const expiresIn = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 60000));
   const truncatedAddress =
@@ -162,6 +210,8 @@ export function formatSessionInstructions(session: VerifySession): string {
     ``,
     `Send exactly *${session.amountSat} satoshis* to prove ownership.`,
     ``,
+    `*Amount:* \`${session.amountSat}\` satoshis`,
+    ``,
     `*Send to:*`,
     `\`${session.verificationAddress}\``,
     ``,
@@ -170,10 +220,10 @@ export function formatSessionInstructions(session: VerifySession): string {
     ``,
     `*Time remaining:* ${expiresIn} min`,
     ``,
-    `*Important:*`,
-    `• Amount must be exact (${session.amountSat} sats)`,
-    `• Must send *from* your claimed address`,
-    `• Use a standard P2PKH wallet`,
+    `*Common mistakes to avoid:*`,
+    `• Wrong amount: must be exactly ${session.amountSat} sats`,
+    `• Wrong source: must send *from* your claimed address`,
+    `• Use Electron Cash or standard P2PKH wallet`,
     ``,
     `_Click "I've Sent It" after sending._`,
   ].join('\n');
