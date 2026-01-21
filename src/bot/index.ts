@@ -6,6 +6,7 @@ import { handleSetup } from './commands/setup.js';
 import { handleSettings } from './commands/settings.js';
 import { handleMembers } from './commands/members.js';
 import { handleAudit } from './commands/audit.js';
+import { handleExport } from './commands/export.js';
 import { handleCallbackQuery } from './callbacks/index.js';
 import { handleWizardTextInput } from './wizard/handlers.js';
 import { handleVerifyTextInput } from '../verify/handlers.js';
@@ -33,6 +34,7 @@ export function createBot(): Telegraf {
   telegraf.command('settings', handleSettings);
   telegraf.command('members', handleMembers);
   telegraf.command('audit', handleAudit);
+  telegraf.command('export', handleExport);
 
   // Register callback query handler
   telegraf.on('callback_query', handleCallbackQuery);
