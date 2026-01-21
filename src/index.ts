@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import { logger } from './util/logger.js';
+import { startBot } from './bot/index.js';
+import { disconnectPrisma } from './db/client.js';
 
 async function main() {
   logger.info('BCHubKey starting...');
@@ -8,22 +10,42 @@ async function main() {
     env: process.env.NODE_ENV ?? 'development',
   });
 
-  // Placeholder: bot initialization will go here
-  logger.info('BCHubKey initialized successfully');
+  try {
+    // Start the Telegram bot
+    await startBot();
 
-  // Keep process alive for development (will be replaced by bot polling)
-  process.on('SIGINT', () => {
-    logger.info('Received SIGINT, shutting down...');
-    process.exit(0);
-  });
-
-  process.on('SIGTERM', () => {
-    logger.info('Received SIGTERM, shutting down...');
-    process.exit(0);
-  });
+    logger.info('BCHubKey initialized successfully');
+  } catch (error) {
+    logger.fatal({ error }, 'Failed to start bot');
+    await cleanup();
+    process.exit(1);
+  }
 }
 
-main().catch((err) => {
+async function cleanup() {
+  logger.info('Cleaning up resources...');
+  try {
+    await disconnectPrisma();
+  } catch (error) {
+    logger.error({ error }, 'Error during cleanup');
+  }
+}
+
+// Handle uncaught errors
+process.on('uncaughtException', async (error) => {
+  logger.fatal({ error }, 'Uncaught exception');
+  await cleanup();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason) => {
+  logger.fatal({ reason }, 'Unhandled rejection');
+  await cleanup();
+  process.exit(1);
+});
+
+main().catch(async (err) => {
   logger.fatal({ err }, 'Fatal error during startup');
+  await cleanup();
   process.exit(1);
 });
