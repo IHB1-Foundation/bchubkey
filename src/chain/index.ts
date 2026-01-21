@@ -11,6 +11,14 @@ import type { ChainAdapter } from './types.js';
 export * from './types.js';
 export { FulcrumAdapter } from './fulcrum.js';
 export { TTLCache } from './cache.js';
+export {
+  fetchTokenMetadata,
+  formatTokenMetadataDisplay,
+  configureMetadataProvider,
+  getMetadataConfig,
+  type TokenMetadata,
+  type MetadataConfig,
+} from './metadata.js';
 
 const logger = createChildLogger('chain');
 

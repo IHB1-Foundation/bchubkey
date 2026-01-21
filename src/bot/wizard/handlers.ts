@@ -4,6 +4,7 @@ import { createChildLogger } from '../../util/logger.js';
 import { getWizardState, updateWizardState, updateWizardData, deleteWizardState } from './state.js';
 import { saveGroupConfig } from './save.js';
 import type { GateType, GroupMode, ActionOnFail } from '../../generated/prisma/client.js';
+import { fetchTokenMetadata, formatTokenMetadataDisplay } from '../../chain/index.js';
 
 const logger = createChildLogger('bot:wizard:handlers');
 
@@ -220,7 +221,37 @@ async function handleTokenIdInput(ctx: Context, userId: string, text: string) {
     return;
   }
 
+  // Store token ID first
   updateWizardData(userId, { tokenId });
+
+  // Attempt to fetch token metadata (non-blocking, failures allowed)
+  let metadataMessage = '';
+  try {
+    await ctx.reply('_Looking up token metadata..._', { parse_mode: 'Markdown' });
+
+    const metadata = await fetchTokenMetadata(tokenId);
+    if (metadata) {
+      // Store metadata in wizard data for later display
+      updateWizardData(userId, {
+        tokenName: metadata.name,
+        tokenSymbol: metadata.symbol,
+        decimals: metadata.decimals,
+      });
+
+      metadataMessage =
+        `*Token Found:*\n` +
+        formatTokenMetadataDisplay(metadata) +
+        `\n\n`;
+
+      logger.info({ userId, tokenId, metadata }, 'Token metadata fetched successfully');
+    } else {
+      metadataMessage = '_Token metadata not available \\(continuing without it\\)_\n\n';
+      logger.info({ userId, tokenId }, 'Token metadata not found');
+    }
+  } catch (error) {
+    metadataMessage = '_Token metadata lookup failed \\(continuing without it\\)_\n\n';
+    logger.warn({ userId, tokenId, error }, 'Token metadata lookup error');
+  }
 
   const state = getWizardState(userId);
   if (!state) return;
@@ -228,19 +259,26 @@ async function handleTokenIdInput(ctx: Context, userId: string, text: string) {
   updateWizardState(userId, { step: 'THRESHOLD' });
 
   if (state.data.gateType === 'FT') {
+    const decimalsHint = state.data.decimals !== undefined
+      ? `\n_Detected decimals: ${state.data.decimals}_`
+      : '';
+
     await ctx.reply(
-      `*Step 3: Minimum Token Amount*\n\n` +
-        `Enter the minimum amount of tokens required.\n\n` +
+      metadataMessage +
+        `*Step 3: Minimum Token Amount*\n\n` +
+        `Enter the minimum amount of tokens required.${decimalsHint}\n\n` +
         `You can enter:\n` +
         `• A plain number (e.g., \`100\`)\n` +
         `• A number with decimals (e.g., \`0.001\`)\n\n` +
-        `If you know the token's decimals, enter them after a space:\n` +
-        `• \`100 8\` means 100 tokens with 8 decimals`,
+        (state.data.decimals !== undefined
+          ? `Since decimals were detected, just enter the human\\-readable amount.`
+          : `If you know the token's decimals, enter them after a space:\n• \`100 8\` means 100 tokens with 8 decimals`),
       { parse_mode: 'Markdown' }
     );
   } else {
     await ctx.reply(
-      `*Step 3: Minimum NFT Count*\n\n` +
+      metadataMessage +
+        `*Step 3: Minimum NFT Count*\n\n` +
         `Enter the minimum number of NFTs required.\n\n` +
         `Example: \`1\` for at least one NFT`,
       { parse_mode: 'Markdown' }
@@ -256,14 +294,26 @@ async function handleThresholdInput(ctx: Context, userId: string, text: string) 
     // Parse FT amount - format: "amount" or "amount decimals"
     const parts = text.trim().split(/\s+/);
     const amountStr = parts[0];
-    const decimals = parts[1] ? parseInt(parts[1], 10) : 0;
+
+    // Use detected decimals from metadata, or user-provided, or default to 0
+    let decimals: number;
+    if (parts[1]) {
+      // User explicitly provided decimals
+      decimals = parseInt(parts[1], 10);
+    } else if (state.data.decimals !== undefined) {
+      // Use decimals from token metadata
+      decimals = state.data.decimals;
+    } else {
+      // Default to 0
+      decimals = 0;
+    }
 
     if (!amountStr || isNaN(parseFloat(amountStr))) {
       await ctx.reply('Invalid amount. Please enter a valid number.');
       return;
     }
 
-    if (parts[1] && (isNaN(decimals) || decimals < 0 || decimals > 18)) {
+    if (isNaN(decimals) || decimals < 0 || decimals > 18) {
       await ctx.reply('Invalid decimals. Please enter a number between 0 and 18.');
       return;
     }
@@ -410,15 +460,36 @@ async function sendConfirmationStep(ctx: Context, userId: string) {
   if (!state) return;
 
   const d = state.data;
+
+  // Format token display with name/symbol if available
+  let tokenDisplay = `\`${d.tokenId?.slice(0, 16)}...\``;
+  if (d.tokenName || d.tokenSymbol) {
+    const parts: string[] = [];
+    if (d.tokenName) parts.push(escapeMarkdown(d.tokenName));
+    if (d.tokenSymbol) parts.push(`(${escapeMarkdown(d.tokenSymbol)})`);
+    tokenDisplay = `${parts.join(' ')}\n  ${tokenDisplay}`;
+  }
+
+  // Format amount display with human-readable value if decimals known
+  let amountDisplay: string;
+  if (d.gateType === 'FT') {
+    if (d.decimals && d.decimals > 0 && d.minAmountBase) {
+      const humanAmount = Number(d.minAmountBase) / Math.pow(10, d.decimals);
+      amountDisplay = `${humanAmount} ${d.tokenSymbol ?? 'tokens'} (${d.minAmountBase} base units)`;
+    } else {
+      amountDisplay = `${d.minAmountBase} base units${d.decimals ? ` (${d.decimals} decimals)` : ''}`;
+    }
+  } else {
+    amountDisplay = `${d.minNftCount} NFT(s)`;
+  }
+
   const summary = [
     `*Configuration Summary*`,
     ``,
     `*Group:* ${escapeMarkdown(state.groupTitle)}`,
     `*Gate Type:* ${d.gateType}`,
-    `*Token ID:* \`${d.tokenId?.slice(0, 16)}...\``,
-    d.gateType === 'FT'
-      ? `*Minimum Amount:* ${d.minAmountBase} base units${d.decimals ? ` (${d.decimals} decimals)` : ''}`
-      : `*Minimum NFTs:* ${d.minNftCount}`,
+    `*Token:* ${tokenDisplay}`,
+    `*Minimum:* ${amountDisplay}`,
     `*Join Mode:* ${d.mode}`,
     `*Recheck Interval:* ${(d.recheckIntervalSec ?? 300) / 60} minutes`,
     `*Grace Period:* ${(d.gracePeriodSec ?? 300) / 60} minutes`,

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { logger } from './util/logger.js';
 import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
-import { initChainAdapter, shutdownChainAdapter } from './chain/index.js';
+import { initChainAdapter, shutdownChainAdapter, configureMetadataProvider } from './chain/index.js';
 import { startVerifyWorker, stopVerifyWorker } from './verify/worker.js';
 import { startJobs, stopJobs } from './jobs/index.js';
 
@@ -14,6 +14,15 @@ async function main() {
   });
 
   try {
+    // Configure token metadata provider (optional BCMR lookup)
+    const metadataProvider = (process.env.TOKEN_METADATA_PROVIDER ?? 'NONE') as 'PAYTACA_BCMR' | 'NONE';
+    configureMetadataProvider({
+      provider: metadataProvider,
+      baseUrl: process.env.PAYTACA_BCMR_BASE_URL ?? 'https://bcmr.paytaca.com/api',
+      timeoutMs: parseInt(process.env.METADATA_TIMEOUT_MS ?? '5000', 10),
+      maxRetries: parseInt(process.env.METADATA_MAX_RETRIES ?? '2', 10),
+    });
+
     // Initialize chain adapter
     await initChainAdapter();
 
