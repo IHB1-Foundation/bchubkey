@@ -343,16 +343,16 @@
     - [x] Error messages include "what happened + what to do next"
 
 ### T-072: Verification flow progress UI (stepper + state clarity)
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Goal: Add “Step X/Y” cues so users always know where they are and what’s next.
+- Goal: Add "Step X/Y" cues so users always know where they are and what's next.
 - Tasks:
     - Add step indicator to verification flow (Address → Micro-tx → Gate Check → Result)
     - Add explicit state labels (PENDING / EXPIRED / VERIFIED / FAILED) in status views
-    - Add “Restart verification” affordance when user is stuck or expired
+    - Add "Restart verification" affordance when user is stuck or expired
 - Acceptance Criteria:
-    - [ ] User can always identify current step and the next action
-    - [ ] Expired/stuck flows provide a clear one-tap recovery path
+    - [x] User can always identify current step and the next action
+    - [x] Expired/stuck flows provide a clear one-tap recovery path
 
 ### T-073: Micro-tx instruction “card” (QR + copy-friendly formatting)
 - Status: TODO

@@ -186,6 +186,7 @@ export const CallbackActions = {
   VERIFY_REFRESH: 'verify_refresh',
   VERIFY_CANCEL: 'verify_cancel',
   VERIFY_CHANGE_ADDRESS: 'verify_change_address',
+  VERIFY_START_OVER: 'verify_start_over',
   WIZARD_CANCEL: 'wizard_cancel',
 } as const;
 
@@ -197,25 +198,31 @@ export const Messages = {
     new MessageBuilder()
       .title('Session Expired')
       .blank()
-      .text('Your verification session has expired.')
+      .field('Status', 'EXPIRED')
       .blank()
-      .action('Use the group link to start again.')
+      .text('Your verification session has timed out.')
+      .blank()
+      .action('Click "Start Over" to begin again.')
       .build(),
 
   verificationSuccess: (txid?: string) =>
     new MessageBuilder()
-      .title('Ownership Proof Complete')
+      .step(3, 3, 'Gate Check')
+      .blank()
+      .field('Status', 'VERIFIED')
       .blank()
       .text('Your address ownership has been verified.')
       .blank()
       .field('Transaction', txid ? `\`${truncate(txid, 20)}\`` : 'confirmed')
       .blank()
-      .text('Gate Check will run automatically.')
+      .text('Gate Check is running. You will be notified of the result.')
       .build(),
 
   verificationFailed: () =>
     new MessageBuilder()
-      .title('Ownership Proof Failed')
+      .step(2, 3, 'Ownership Proof')
+      .blank()
+      .field('Status', 'FAILED')
       .blank()
       .text("We couldn't verify your address ownership.")
       .text('The transaction inputs did not match your claimed address.')
@@ -225,6 +232,8 @@ export const Messages = {
         'Ensure you send *from* the address you submitted',
         'Avoid multi-sig or smart contract wallets',
       ])
+      .blank()
+      .action('Click "Start Over" to try with a different address.')
       .build(),
 
   verificationCancelled: () =>

@@ -53,6 +53,10 @@ export async function handleVerifyCallback(ctx: Context, action: string, data: s
       await handleCancel(ctx, userId, state);
       break;
 
+    case 'verify_start_over':
+      await handleStartOver(ctx, userId, state);
+      break;
+
     default:
       logger.warn({ action, data }, 'Unknown verify action');
   }
@@ -62,7 +66,12 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
   const state = getVerifyFlowState(userId);
 
   if (!state || !state.address) {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -152,7 +161,12 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
 async function handleChangeAddress(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state) {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -179,7 +193,12 @@ async function handleChangeAddress(ctx: Context, userId: string) {
 async function handleSentClick(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state?.sessionId) {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -189,7 +208,12 @@ async function handleSentClick(ctx: Context, userId: string) {
   });
 
   if (!session || session.status !== 'PENDING') {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -199,7 +223,12 @@ async function handleSentClick(ctx: Context, userId: string) {
       where: { id: session.id },
       data: { status: 'EXPIRED' },
     });
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -231,7 +260,12 @@ async function handleSentClick(ctx: Context, userId: string) {
 async function handleRefresh(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state?.sessionId) {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -241,7 +275,12 @@ async function handleRefresh(ctx: Context, userId: string) {
   });
 
   if (!session) {
-    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
+    await ctx.editMessageText(Messages.sessionExpired(), {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+      ]),
+    });
     return;
   }
 
@@ -257,15 +296,20 @@ async function handleRefresh(ctx: Context, userId: string) {
       await ctx.editMessageText(Messages.verificationFailed(), {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback(ButtonLabels.TRY_AGAIN, 'verify_change_address')],
+          [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
         ]),
       });
-      deleteVerifyFlowState(userId);
+      // Keep state for restart capability
       break;
 
     case 'EXPIRED':
-      await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
-      deleteVerifyFlowState(userId);
+      await ctx.editMessageText(Messages.sessionExpired(), {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+        ]),
+      });
+      // Keep state for restart capability
       break;
 
     case 'PENDING':
@@ -274,8 +318,13 @@ async function handleRefresh(ctx: Context, userId: string) {
           where: { id: session.id },
           data: { status: 'EXPIRED' },
         });
-        await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
-        deleteVerifyFlowState(userId);
+        await ctx.editMessageText(Messages.sessionExpired(), {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
+          ]),
+        });
+        // Keep state for restart capability
       } else {
         // Still pending - show instructions again
         await ctx.editMessageText(formatSessionInstructions(session), {
@@ -311,4 +360,50 @@ async function handleCancel(
   await ctx.editMessageText(Messages.verificationCancelled(), { parse_mode: 'Markdown' });
 
   logger.info({ userId }, 'Verification cancelled by user');
+}
+
+async function handleStartOver(
+  ctx: Context,
+  userId: string,
+  state: ReturnType<typeof getVerifyFlowState>
+) {
+  // If we have state with groupId, we can restart directly
+  if (state?.groupId) {
+    // Reset to address input step
+    updateVerifyFlowState(userId, {
+      step: 'AWAITING_ADDRESS',
+      address: undefined,
+      sessionId: undefined,
+    });
+
+    const msg = new MessageBuilder()
+      .step(1, 3, 'Submit Address')
+      .blank()
+      .field('Group', state.groupTitle)
+      .blank()
+      .text('Please send your BCH address (cashaddr format) to begin verification.')
+      .blank()
+      .code('bitcoincash:qz...')
+      .build();
+
+    await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
+
+    logger.info({ userId, groupId: state.groupId }, 'User restarting verification');
+    return;
+  }
+
+  // No state - tell user to use group link
+  deleteVerifyFlowState(userId);
+
+  const msg = new MessageBuilder()
+    .title('Start New Verification')
+    .blank()
+    .text('Your session has ended.')
+    .blank()
+    .action('Use the verification link from the group to start again.')
+    .build();
+
+  await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
+
+  logger.info({ userId }, 'User requested start over but no group context');
 }
