@@ -310,3 +310,176 @@
 - Acceptance Criteria:
     - [x] groups list page works
     - [x] group detail + members + logs pages work
+
+---
+
+## Milestone M7 — Hackathon “Fancy” Foundations (Brand + UX System)
+### T-070: Brand kit (logo + colors + language)
+- Status: DONE
+- Priority: P1
+- Goal: Establish consistent branding across Telegram + Admin Dashboard + docs.
+- Tasks:
+    - Define a minimal brand palette (primary/accent/neutral) and typography rules
+    - Add a simple logo (SVG) + favicon (optional)
+    - Standardize product language (Ownership Proof / Gate Check / Enforcement) in user/admin copy
+    - Document the brand kit in `docs/` for reuse
+- Acceptance Criteria:
+    - [x] A single "brand kit" doc exists with palette + usage rules
+    - [x] Logo asset is added and can be used in dashboard and screenshots
+    - [x] Key terms are consistent across bot messages and dashboard UI
+
+### T-071: Telegram message design system + copy pass
+- Status: TODO
+- Priority: P0
+- Goal: Make Telegram UX feel polished and predictable with consistent formatting and tone.
+- Tasks:
+    - Create reusable message builders (title/section/bullets/code/warnings) for Markdown output
+    - Standardize button labels (Next, Back, Refresh, Cancel, Help) across flows
+    - Copy pass on `/start`, verification intro, micro-tx instructions, PASS/FAIL messages
+    - Ensure messages are readable on mobile (short lines, scannable sections)
+- Acceptance Criteria:
+    - [ ] Verification flow messages share consistent layout (title → requirements → next step)
+    - [ ] Buttons are consistently named and placed across steps
+    - [ ] Error messages include “what happened + what to do next”
+
+### T-072: Verification flow progress UI (stepper + state clarity)
+- Status: TODO
+- Priority: P0
+- Goal: Add “Step X/Y” cues so users always know where they are and what’s next.
+- Tasks:
+    - Add step indicator to verification flow (Address → Micro-tx → Gate Check → Result)
+    - Add explicit state labels (PENDING / EXPIRED / VERIFIED / FAILED) in status views
+    - Add “Restart verification” affordance when user is stuck or expired
+- Acceptance Criteria:
+    - [ ] User can always identify current step and the next action
+    - [ ] Expired/stuck flows provide a clear one-tap recovery path
+
+### T-073: Micro-tx instruction “card” (QR + copy-friendly formatting)
+- Status: TODO
+- Priority: P0
+- Goal: Make ownership proof instructions look premium and reduce user mistakes.
+- Tasks:
+    - Generate and send a QR code for the verification target (address + amount)
+    - Present amount/address in copy-friendly code blocks
+    - Add reminders for common pitfalls (exact sats, must send *from* claimed address, wallet caveats)
+    - Provide graceful fallback when QR generation fails
+- Acceptance Criteria:
+    - [ ] Users receive a QR image for the micro-tx step (or a clear fallback)
+    - [ ] Address and amount are presented in a format that’s easy to copy
+    - [ ] “Wrong amount / wrong source address” guidance is present and concise
+
+### T-074: Token metadata “delight” (name/symbol/icon surfaced)
+- Status: TODO
+- Priority: P1
+- Goal: Make the gate feel real by showing token identity (not just a hex token ID).
+- Tasks:
+    - Show token name/symbol/decimals wherever token ID is displayed (when available)
+    - If an icon URL exists, display it in Telegram (photo) and dashboard (img)
+    - Ensure missing metadata remains graceful and non-blocking
+- Acceptance Criteria:
+    - [ ] Setup wizard and verification intro show name/symbol when available
+    - [ ] Token icon displays when available, with a safe fallback when not
+    - [ ] No flow is blocked by metadata fetch failures
+
+---
+
+## Milestone M8 — Admin Dashboard “Fancy” UX (Demo-Ready)
+### T-080: Dashboard theme refresh + dark mode toggle
+- Status: TODO
+- Priority: P0
+- Goal: Make the admin dashboard look modern and “product-grade” for screenshots/video.
+- Tasks:
+    - Convert styles to CSS variables (brand palette, spacing, radii)
+    - Add dark mode toggle with persistence (localStorage)
+    - Improve typography + layout (header, cards, tables, responsive spacing)
+- Acceptance Criteria:
+    - [ ] Dark mode toggle works and persists across refresh
+    - [ ] Pages remain readable and clean on common viewport sizes
+
+### T-081: Dashboard “at-a-glance” stats + lightweight charts
+- Status: TODO
+- Priority: P0
+- Goal: Provide an impressive overview (counts, health, trends) without heavy dependencies.
+- Tasks:
+    - Add summary cards: PASS/FAIL/PENDING totals, last recheck time, last enforcement action
+    - Add a simple chart (inline SVG) for member states distribution
+    - Add a “recent events” panel (latest audit logs distilled)
+- Acceptance Criteria:
+    - [ ] Group detail page includes summary cards and a simple chart
+    - [ ] Recent events panel is readable and useful in demo
+
+### T-082: Members table search/filter/sort (demo-scale, server-side)
+- Status: TODO
+- Priority: P1
+- Goal: Make the dashboard feel usable: find users fast, filter by state, and sort.
+- Tasks:
+    - Add query params for filtering (state, enforced, username/userId search)
+    - Add sorting (lastCheckedAt, state, balance) with stable defaults
+    - Add basic pagination (page/limit) to avoid huge tables
+- Acceptance Criteria:
+    - [ ] Search by user ID or username works
+    - [ ] Filter by state works (PASS/FAIL/PENDING)
+    - [ ] Sorting and pagination produce deterministic results
+
+### T-083: Audit logs viewer improvements (expand, filter, copy)
+- Status: TODO
+- Priority: P1
+- Goal: Turn audit logs into a demo-friendly “trust” surface.
+- Tasks:
+    - Add filters (type, userId) and a quick “show only failures” view
+    - Allow expanding payload JSON (pretty print) with safe truncation
+    - Add “copy payload” affordance (where possible) or clearly formatted output
+- Acceptance Criteria:
+    - [ ] Logs can be filtered by type and by user
+    - [ ] Payload expansion works and remains readable
+
+### T-084: Live-ish updates + health indicators
+- Status: TODO
+- Priority: P2
+- Goal: Give the dashboard a “live system” feel (helpful for demo confidence).
+- Tasks:
+    - Add health/status indicators (chain adapter, jobs running, verify worker heartbeat)
+    - Add auto-refresh for key panels (polling or SSE)
+    - Clearly show “Last updated” timestamps in UI
+- Acceptance Criteria:
+    - [ ] Dashboard surfaces basic system health and last update times
+    - [ ] Recent events and key stats update without manual refresh
+
+---
+
+## Milestone M9 — Demo & Submission Polish (Showtime)
+### T-090: One-command demo runner (`npm run demo`)
+- Status: TODO
+- Priority: P0
+- Goal: Reduce demo risk by making setup deterministic and fast.
+- Tasks:
+    - Add `npm run demo` script that applies “fast mode” env defaults
+    - Add a demo reset/seed script (DB reset optional, seeded sample group/rule optional)
+    - Print a short console “demo checklist” on start (ports, mode, intervals)
+- Acceptance Criteria:
+    - [ ] `npm run demo` starts the app with fast intervals and clear console output
+    - [ ] Optional reset/seed can be executed without manual DB poking
+
+### T-091: Demo safety rails + visual cues
+- Status: TODO
+- Priority: P1
+- Goal: Prevent operator mistakes during live judging.
+- Tasks:
+    - Add a “Demo Mode” indicator to logs and (optionally) dashboard header
+    - Add guardrails for destructive actions (e.g., confirm resets in scripts)
+    - Ensure all demo-critical errors log a clear remediation step
+- Acceptance Criteria:
+    - [ ] Demo Mode is clearly visible when enabled
+    - [ ] Demo reset actions require explicit confirmation (or obvious opt-in)
+
+### T-092: Submission assets (screenshots + diagram + README polish)
+- Status: TODO
+- Priority: P1
+- Goal: Make the repo look like a complete hackathon submission.
+- Tasks:
+    - Add a simple architecture diagram (SVG/PNG) and embed in README
+    - Capture/update key screenshots (Telegram flow + dashboard) and add to `docs/submission/`
+    - Update README “Demo & Submission” section to include assets and quick links
+- Acceptance Criteria:
+    - [ ] README includes an architecture visual and 2–3 product screenshots
+    - [ ] `docs/submission/` contains a minimal, complete asset pack for judges
