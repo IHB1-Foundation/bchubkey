@@ -1,6 +1,7 @@
 import type { Context } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { handleSetupWizardCallback } from './setupWizard.js';
+import { handleWizardCallback } from '../wizard/handlers.js';
 
 const logger = createChildLogger('bot:callbacks');
 
@@ -11,6 +12,7 @@ export type CallbackAction =
   | 'wizard_action'
   | 'wizard_confirm'
   | 'wizard_cancel'
+  | 'wizard_use_defaults'
   | 'verify_sent'
   | 'verify_refresh'
   | 'verify_cancel'
@@ -53,8 +55,8 @@ export async function handleCallbackQuery(ctx: Context) {
       case 'wizard_action':
       case 'wizard_confirm':
       case 'wizard_cancel':
-        // Will be implemented in T-011
-        await ctx.answerCbQuery('Processing...');
+      case 'wizard_use_defaults':
+        await handleWizardCallback(ctx, parsed.action, parsed.data);
         break;
 
       case 'verify_sent':

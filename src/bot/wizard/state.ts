@@ -8,6 +8,7 @@ export type WizardStep =
   | 'JOIN_MODE'
   | 'RECHECK_INTERVAL'
   | 'GRACE_PERIOD'
+  | 'ACTION_ON_FAIL'
   | 'VERIFY_ADDRESS'
   | 'VERIFY_AMOUNT_RANGE'
   | 'CONFIRM'
