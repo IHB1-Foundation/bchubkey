@@ -238,10 +238,7 @@ async function handleTokenIdInput(ctx: Context, userId: string, text: string) {
         decimals: metadata.decimals,
       });
 
-      metadataMessage =
-        `*Token Found:*\n` +
-        formatTokenMetadataDisplay(metadata) +
-        `\n\n`;
+      metadataMessage = `*Token Found:*\n` + formatTokenMetadataDisplay(metadata) + `\n\n`;
 
       logger.info({ userId, tokenId, metadata }, 'Token metadata fetched successfully');
     } else {
@@ -259,9 +256,8 @@ async function handleTokenIdInput(ctx: Context, userId: string, text: string) {
   updateWizardState(userId, { step: 'THRESHOLD' });
 
   if (state.data.gateType === 'FT') {
-    const decimalsHint = state.data.decimals !== undefined
-      ? `\n_Detected decimals: ${state.data.decimals}_`
-      : '';
+    const decimalsHint =
+      state.data.decimals !== undefined ? `\n_Detected decimals: ${state.data.decimals}_` : '';
 
     await ctx.reply(
       metadataMessage +

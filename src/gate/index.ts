@@ -11,11 +11,7 @@ export {
   type GateEvaluationResult,
 } from './evaluate.js';
 
-export {
-  enforceGateResult,
-  notifyUserGateResult,
-  type EnforceResult,
-} from './enforce.js';
+export { enforceGateResult, notifyUserGateResult, type EnforceResult } from './enforce.js';
 
 import { prisma } from '../db/client.js';
 import { evaluateGate, updateMembershipState } from './evaluate.js';

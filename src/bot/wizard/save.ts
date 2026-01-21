@@ -6,7 +6,10 @@ import type { WizardState } from './state.js';
 const logger = createChildLogger('bot:wizard:save');
 
 // Defaults from environment (for demo mode customization)
-const DEFAULT_RECHECK_INTERVAL_SEC = parseInt(process.env.DEFAULT_RECHECK_INTERVAL_SEC ?? '300', 10);
+const DEFAULT_RECHECK_INTERVAL_SEC = parseInt(
+  process.env.DEFAULT_RECHECK_INTERVAL_SEC ?? '300',
+  10
+);
 const DEFAULT_GRACE_PERIOD_SEC = parseInt(process.env.DEFAULT_GRACE_PERIOD_SEC ?? '300', 10);
 const DEFAULT_VERIFY_MIN_SAT = parseInt(process.env.DEFAULT_VERIFY_MIN_SAT ?? '2000', 10);
 const DEFAULT_VERIFY_MAX_SAT = parseInt(process.env.DEFAULT_VERIFY_MAX_SAT ?? '2999', 10);

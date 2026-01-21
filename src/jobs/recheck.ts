@@ -56,10 +56,7 @@ async function recheckGroup(groupId: string, intervalMs: number): Promise<void> 
       state: {
         in: ['VERIFIED_PASS', 'VERIFIED_FAIL'],
       },
-      OR: [
-        { lastCheckedAt: null },
-        { lastCheckedAt: { lt: cutoffTime } },
-      ],
+      OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: cutoffTime } }],
     },
     include: {
       user: {

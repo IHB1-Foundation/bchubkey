@@ -36,7 +36,12 @@ export async function runGraceEnforcementJob(): Promise<void> {
     const gateRule = group.gateRules[0];
 
     try {
-      await enforceGraceExpiry(group.id, group.mode, gateRule.gracePeriodSec, gateRule.actionOnFail);
+      await enforceGraceExpiry(
+        group.id,
+        group.mode,
+        gateRule.gracePeriodSec,
+        gateRule.actionOnFail
+      );
     } catch (error) {
       logger.error({ error, groupId: group.id }, 'Grace enforcement failed for group');
     }
@@ -86,7 +91,10 @@ async function enforceGraceExpiry(
       if (evaluation.pass) {
         // User has recovered - update to PASS
         await updateMembershipState(membership.tgUserId, groupId, evaluation);
-        logger.info({ tgUserId: membership.tgUserId, groupId }, 'User recovered during grace, now PASS');
+        logger.info(
+          { tgUserId: membership.tgUserId, groupId },
+          'User recovered during grace, now PASS'
+        );
         continue;
       }
 

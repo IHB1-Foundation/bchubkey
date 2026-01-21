@@ -100,5 +100,8 @@ async function handlePauseResume(ctx: Context, targetStatus: 'ACTIVE' | 'PAUSED'
     );
   }
 
-  logger.info({ groupId, previousStatus: group.status, newStatus: targetStatus }, 'Group status updated');
+  logger.info(
+    { groupId, previousStatus: group.status, newStatus: targetStatus },
+    'Group status updated'
+  );
 }

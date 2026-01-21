@@ -101,8 +101,7 @@ export async function handleAudit(ctx: Context) {
 
   if (!user) {
     await ctx.reply(
-      `*User not found:* ID \`${targetUserId}\`\n\n` +
-        'This user has not interacted with the bot.',
+      `*User not found:* ID \`${targetUserId}\`\n\n` + 'This user has not interacted with the bot.',
       { parse_mode: 'Markdown' }
     );
     return;

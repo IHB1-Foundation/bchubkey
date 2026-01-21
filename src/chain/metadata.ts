@@ -36,7 +36,10 @@ let config: MetadataConfig = { ...DEFAULT_CONFIG };
 
 export function configureMetadataProvider(options: Partial<MetadataConfig>): void {
   config = { ...DEFAULT_CONFIG, ...options };
-  logger.info({ provider: config.provider, baseUrl: config.baseUrl }, 'Metadata provider configured');
+  logger.info(
+    { provider: config.provider, baseUrl: config.baseUrl },
+    'Metadata provider configured'
+  );
 }
 
 export function getMetadataConfig(): MetadataConfig {
@@ -66,7 +69,10 @@ export async function fetchTokenMetadata(tokenCategory: string): Promise<TokenMe
     try {
       const result = await fetchWithTimeout(tokenCategory, attempt);
       if (result) {
-        logger.info({ tokenCategory, name: result.name, symbol: result.symbol }, 'Token metadata fetched');
+        logger.info(
+          { tokenCategory, name: result.name, symbol: result.symbol },
+          'Token metadata fetched'
+        );
         return result;
       }
     } catch (error) {
@@ -91,7 +97,10 @@ export async function fetchTokenMetadata(tokenCategory: string): Promise<TokenMe
   return null;
 }
 
-async function fetchWithTimeout(tokenCategory: string, attempt: number): Promise<TokenMetadata | null> {
+async function fetchWithTimeout(
+  tokenCategory: string,
+  attempt: number
+): Promise<TokenMetadata | null> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs);
 
@@ -139,7 +148,10 @@ interface PaytacaTokenResponse {
   };
 }
 
-function parsePaytacaResponse(tokenCategory: string, data: PaytacaTokenResponse): TokenMetadata | null {
+function parsePaytacaResponse(
+  tokenCategory: string,
+  data: PaytacaTokenResponse
+): TokenMetadata | null {
   // Paytaca API structure:
   // - name, description at top level
   // - symbol, decimals in nested 'token' object
@@ -148,11 +160,12 @@ function parsePaytacaResponse(tokenCategory: string, data: PaytacaTokenResponse)
     category: tokenCategory,
     name: data.name ?? data.token?.name ?? undefined,
     symbol: data.token?.symbol ?? data.symbol ?? undefined,
-    decimals: typeof data.token?.decimals === 'number'
-      ? data.token.decimals
-      : typeof data.decimals === 'number'
-        ? data.decimals
-        : undefined,
+    decimals:
+      typeof data.token?.decimals === 'number'
+        ? data.token.decimals
+        : typeof data.decimals === 'number'
+          ? data.decimals
+          : undefined,
     description: data.description ?? data.token?.description ?? undefined,
     iconUrl: data.uris?.icon ?? undefined,
   };

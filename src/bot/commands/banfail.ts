@@ -54,7 +54,8 @@ export async function handleBanfail(ctx: Context) {
       return;
     }
 
-    const currentAction = gateRule.actionOnFail === 'KICK' ? 'ON (kick users)' : 'OFF (restrict only)';
+    const currentAction =
+      gateRule.actionOnFail === 'KICK' ? 'ON (kick users)' : 'OFF (restrict only)';
     await ctx.reply(
       `*Ban on Fail Setting*\n\n` +
         `Current: ${currentAction}\n\n` +

@@ -56,7 +56,9 @@ export async function handleExport(ctx: Context) {
   const csvLines: string[] = [];
 
   // Header row
-  csvLines.push('user_id,username,first_name,address,state,last_balance,last_checked,enforced,updated_at');
+  csvLines.push(
+    'user_id,username,first_name,address,state,last_balance,last_checked,enforced,updated_at'
+  );
 
   // Data rows
   for (const m of memberships) {
@@ -85,12 +87,15 @@ export async function handleExport(ctx: Context) {
     const filename = `members_${groupId}_${Date.now()}.csv`;
     const buffer = Buffer.from(csvContent, 'utf-8');
 
-    await ctx.replyWithDocument({
-      source: buffer,
-      filename,
-    }, {
-      caption: `Membership export: ${memberships.length} records`,
-    });
+    await ctx.replyWithDocument(
+      {
+        source: buffer,
+        filename,
+      },
+      {
+        caption: `Membership export: ${memberships.length} records`,
+      }
+    );
 
     logger.info({ groupId, count: memberships.length }, 'CSV export sent as file');
   } catch (error) {

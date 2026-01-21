@@ -74,7 +74,11 @@ export async function handleMembers(ctx: Context) {
   });
 
   // Format user info helper
-  const formatUser = (user: { tgUserId: string; username: string | null; firstName: string | null }) => {
+  const formatUser = (user: {
+    tgUserId: string;
+    username: string | null;
+    firstName: string | null;
+  }) => {
     if (user.username) {
       return `@${user.username}`;
     } else if (user.firstName) {

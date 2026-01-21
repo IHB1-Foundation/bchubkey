@@ -87,11 +87,14 @@ export function startJobs(): void {
     }
   }, CLEANUP_INTERVAL_MS);
 
-  logger.info({
-    recheckIntervalMs: RECHECK_INTERVAL_MS,
-    graceIntervalMs: GRACE_INTERVAL_MS,
-    cleanupIntervalMs: CLEANUP_INTERVAL_MS,
-  }, 'Scheduled jobs started');
+  logger.info(
+    {
+      recheckIntervalMs: RECHECK_INTERVAL_MS,
+      graceIntervalMs: GRACE_INTERVAL_MS,
+      cleanupIntervalMs: CLEANUP_INTERVAL_MS,
+    },
+    'Scheduled jobs started'
+  );
 }
 
 /**

@@ -103,7 +103,10 @@ async function approveJoinRequest(
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
 
     // Join request may not exist (user already in group or never requested)
-    if (errorMsg.includes('USER_ALREADY_PARTICIPANT') || errorMsg.includes('HIDE_REQUESTER_MISSING')) {
+    if (
+      errorMsg.includes('USER_ALREADY_PARTICIPANT') ||
+      errorMsg.includes('HIDE_REQUESTER_MISSING')
+    ) {
       logger.debug({ tgUserId, groupId }, 'No pending join request to approve');
       return { success: true, action: 'NONE' };
     }
