@@ -4,6 +4,7 @@ import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
 import { initChainAdapter, shutdownChainAdapter } from './chain/index.js';
 import { startVerifyWorker, stopVerifyWorker } from './verify/worker.js';
+import { startJobs, stopJobs } from './jobs/index.js';
 
 async function main() {
   logger.info('BCHubKey starting...');
@@ -22,6 +23,9 @@ async function main() {
     // Start the verification polling worker
     startVerifyWorker();
 
+    // Start scheduled jobs (recheck, grace enforcement, cleanup)
+    startJobs();
+
     logger.info('BCHubKey initialized successfully');
   } catch (error) {
     logger.fatal({ error }, 'Failed to start bot');
@@ -33,6 +37,7 @@ async function main() {
 async function cleanup() {
   logger.info('Cleaning up resources...');
   try {
+    stopJobs();
     stopVerifyWorker();
     await shutdownChainAdapter();
     await disconnectPrisma();
