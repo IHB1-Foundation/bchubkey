@@ -2,9 +2,14 @@ import 'dotenv/config';
 import { logger } from './util/logger.js';
 import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
-import { initChainAdapter, shutdownChainAdapter, configureMetadataProvider } from './chain/index.js';
+import {
+  initChainAdapter,
+  shutdownChainAdapter,
+  configureMetadataProvider,
+} from './chain/index.js';
 import { startVerifyWorker, stopVerifyWorker } from './verify/worker.js';
 import { startJobs, stopJobs } from './jobs/index.js';
+import { startDashboard, stopDashboard } from './admin/index.js';
 
 async function main() {
   logger.info('BCHubKey starting...');
@@ -15,7 +20,9 @@ async function main() {
 
   try {
     // Configure token metadata provider (optional BCMR lookup)
-    const metadataProvider = (process.env.TOKEN_METADATA_PROVIDER ?? 'NONE') as 'PAYTACA_BCMR' | 'NONE';
+    const metadataProvider = (process.env.TOKEN_METADATA_PROVIDER ?? 'NONE') as
+      | 'PAYTACA_BCMR'
+      | 'NONE';
     configureMetadataProvider({
       provider: metadataProvider,
       baseUrl: process.env.PAYTACA_BCMR_BASE_URL ?? 'https://bcmr.paytaca.com/api',
@@ -35,6 +42,12 @@ async function main() {
     // Start scheduled jobs (recheck, grace enforcement, cleanup)
     startJobs();
 
+    // Optionally start admin dashboard
+    const adminPort = process.env.ADMIN_PORT ? parseInt(process.env.ADMIN_PORT, 10) : null;
+    if (adminPort) {
+      await startDashboard(adminPort);
+    }
+
     logger.info('BCHubKey initialized successfully');
   } catch (error) {
     logger.fatal({ error }, 'Failed to start bot');
@@ -48,6 +61,7 @@ async function cleanup() {
   try {
     stopJobs();
     stopVerifyWorker();
+    await stopDashboard();
     await shutdownChainAdapter();
     await disconnectPrisma();
   } catch (error) {
