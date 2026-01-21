@@ -2,6 +2,7 @@ import type { Context } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { prisma } from '../../db/client.js';
 import { createVerifyFlowState, getVerifyFlowState } from '../../verify/state.js';
+import { fetchTokenMetadata, type TokenMetadata } from '../../chain/metadata.js';
 import {
   MessageBuilder,
   escapeMarkdown,
@@ -161,6 +162,15 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
   // Format threshold for display
   const threshold = formatThreshold(rule);
 
+  // Fetch token metadata (non-blocking, graceful failure)
+  let tokenMetadata: TokenMetadata | null = null;
+  try {
+    tokenMetadata = await fetchTokenMetadata(rule.tokenId);
+  } catch (error) {
+    logger.warn({ error, tokenId: rule.tokenId }, 'Token metadata fetch failed');
+    // Continue without metadata
+  }
+
   // Create verification flow state
   createVerifyFlowState(
     userId.toString(),
@@ -172,17 +182,26 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
     rule.verifyAddress
   );
 
+  // Build token display string
+  const tokenDisplay = formatTokenDisplay(rule.tokenId, tokenMetadata);
+
+  // Format threshold with symbol if available
+  const thresholdWithSymbol = formatThresholdWithSymbol(rule, tokenMetadata);
+
+  // Build gate requirements
+  const gateRequirements = [
+    `Token Type: ${rule.gateType}`,
+    tokenDisplay,
+    `Minimum: ${thresholdWithSymbol}`,
+  ];
+
   // Show gate requirements and prompt for address
   const summary = new MessageBuilder()
     .step(1, 3, 'Submit Address')
     .blank()
     .field('Group', escapeMarkdown(group.title))
     .blank()
-    .section('Gate Requirements', [
-      `Token Type: ${rule.gateType}`,
-      `Token ID: \`${formatTokenId(rule.tokenId)}\``,
-      `Minimum: ${threshold}`,
-    ])
+    .section('Gate Requirements', gateRequirements)
     .blank()
     .section('Verification Process', [
       'Submit your BCH address',
@@ -195,9 +214,24 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
     .code('bitcoincash:qz...')
     .build();
 
-  await ctx.reply(summary, { parse_mode: 'Markdown' });
+  // If token has an icon URL, try to send it as a photo with the summary as caption
+  if (tokenMetadata?.iconUrl) {
+    try {
+      await ctx.replyWithPhoto(tokenMetadata.iconUrl, {
+        caption: summary,
+        parse_mode: 'Markdown',
+      });
+      logger.info({ userId, groupId, iconUrl: tokenMetadata.iconUrl }, 'Sent verification intro with token icon');
+    } catch (error) {
+      // Icon failed to load, fall back to text only
+      logger.warn({ error, iconUrl: tokenMetadata.iconUrl }, 'Token icon failed to load');
+      await ctx.reply(summary, { parse_mode: 'Markdown' });
+    }
+  } else {
+    await ctx.reply(summary, { parse_mode: 'Markdown' });
+  }
 
-  logger.info({ userId, groupId, gateType: rule.gateType }, 'Verification flow started');
+  logger.info({ userId, groupId, gateType: rule.gateType, hasMetadata: !!tokenMetadata }, 'Verification flow started');
 }
 
 function formatThreshold(rule: {
@@ -219,6 +253,40 @@ function formatThreshold(rule: {
       return `${whole}.${frac.toString().padStart(decimals, '0').replace(/0+$/, '')} tokens`;
     }
     return `${base} tokens (base units)`;
+  } else {
+    return `${rule.minNftCount ?? 1} NFT(s)`;
+  }
+}
+
+function formatTokenDisplay(tokenId: string, metadata: TokenMetadata | null): string {
+  if (metadata?.name || metadata?.symbol) {
+    const parts: string[] = [];
+    if (metadata.name) parts.push(escapeMarkdown(metadata.name));
+    if (metadata.symbol) parts.push(`(${escapeMarkdown(metadata.symbol)})`);
+    return `Token: ${parts.join(' ')}`;
+  }
+  return `Token ID: \`${formatTokenId(tokenId)}\``;
+}
+
+function formatThresholdWithSymbol(
+  rule: { gateType: string; minAmountBase: string | null; minNftCount: number | null; decimals: number | null },
+  metadata: TokenMetadata | null
+): string {
+  if (rule.gateType === 'FT') {
+    const base = BigInt(rule.minAmountBase ?? '0');
+    const decimals = metadata?.decimals ?? rule.decimals ?? 0;
+    const symbol = metadata?.symbol ? ` ${escapeMarkdown(metadata.symbol)}` : ' tokens';
+
+    if (decimals > 0) {
+      const divisor = BigInt(10 ** decimals);
+      const whole = base / divisor;
+      const frac = base % divisor;
+      if (frac === 0n) {
+        return `${whole}${symbol}`;
+      }
+      return `${whole}.${frac.toString().padStart(decimals, '0').replace(/0+$/, '')}${symbol}`;
+    }
+    return `${base}${symbol}`;
   } else {
     return `${rule.minNftCount ?? 1} NFT(s)`;
   }

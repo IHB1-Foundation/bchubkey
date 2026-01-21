@@ -368,8 +368,8 @@
     - [x] Address and amount are presented in a format that's easy to copy
     - [x] "Wrong amount / wrong source address" guidance is present and concise
 
-### T-074: Token metadata “delight” (name/symbol/icon surfaced)
-- Status: TODO
+### T-074: Token metadata "delight" (name/symbol/icon surfaced)
+- Status: DONE
 - Priority: P1
 - Goal: Make the gate feel real by showing token identity (not just a hex token ID).
 - Tasks:
@@ -377,9 +377,9 @@
     - If an icon URL exists, display it in Telegram (photo) and dashboard (img)
     - Ensure missing metadata remains graceful and non-blocking
 - Acceptance Criteria:
-    - [ ] Setup wizard and verification intro show name/symbol when available
-    - [ ] Token icon displays when available, with a safe fallback when not
-    - [ ] No flow is blocked by metadata fetch failures
+    - [x] Setup wizard and verification intro show name/symbol when available
+    - [x] Token icon displays when available, with a safe fallback when not
+    - [x] No flow is blocked by metadata fetch failures
 
 ---
 
