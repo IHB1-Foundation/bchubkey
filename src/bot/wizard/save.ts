@@ -5,6 +5,13 @@ import type { WizardState } from './state.js';
 
 const logger = createChildLogger('bot:wizard:save');
 
+// Defaults from environment (for demo mode customization)
+const DEFAULT_RECHECK_INTERVAL_SEC = parseInt(process.env.DEFAULT_RECHECK_INTERVAL_SEC ?? '300', 10);
+const DEFAULT_GRACE_PERIOD_SEC = parseInt(process.env.DEFAULT_GRACE_PERIOD_SEC ?? '300', 10);
+const DEFAULT_VERIFY_MIN_SAT = parseInt(process.env.DEFAULT_VERIFY_MIN_SAT ?? '2000', 10);
+const DEFAULT_VERIFY_MAX_SAT = parseInt(process.env.DEFAULT_VERIFY_MAX_SAT ?? '2999', 10);
+const DEFAULT_VERIFY_EXPIRE_MIN = parseInt(process.env.DEFAULT_VERIFY_EXPIRE_MIN ?? '10', 10);
+
 export interface SaveResult {
   groupId: string;
   setupCode: string;
@@ -51,13 +58,13 @@ export async function saveGroupConfig(state: WizardState): Promise<SaveResult> {
       minAmountBase: data.minAmountBase,
       minNftCount: data.minNftCount,
       decimals: data.decimals,
-      recheckIntervalSec: data.recheckIntervalSec ?? 300,
-      gracePeriodSec: data.gracePeriodSec ?? 300,
+      recheckIntervalSec: data.recheckIntervalSec ?? DEFAULT_RECHECK_INTERVAL_SEC,
+      gracePeriodSec: data.gracePeriodSec ?? DEFAULT_GRACE_PERIOD_SEC,
       actionOnFail: data.actionOnFail ?? 'RESTRICT',
       verifyAddress: data.verifyAddress,
-      verifyMinSat: data.verifyMinSat ?? 2000,
-      verifyMaxSat: data.verifyMaxSat ?? 2999,
-      verifyExpireMin: data.verifyExpireMin ?? 10,
+      verifyMinSat: data.verifyMinSat ?? DEFAULT_VERIFY_MIN_SAT,
+      verifyMaxSat: data.verifyMaxSat ?? DEFAULT_VERIFY_MAX_SAT,
+      verifyExpireMin: data.verifyExpireMin ?? DEFAULT_VERIFY_EXPIRE_MIN,
     },
   });
 
