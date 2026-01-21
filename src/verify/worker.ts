@@ -8,6 +8,7 @@
 import { prisma } from '../db/client.js';
 import { getChainAdapter } from '../chain/index.js';
 import { createChildLogger } from '../util/logger.js';
+import { processGateCheck } from '../gate/index.js';
 import type { VerifySession } from '../generated/prisma/client.js';
 
 const logger = createChildLogger('verify:worker');
@@ -249,6 +250,13 @@ async function verifySessionOwnership(
       },
       'Ownership verification SUCCESS'
     );
+
+    // Trigger gate check after successful ownership verification
+    try {
+      await processGateCheck(session.tgUserId, session.groupId);
+    } catch (error) {
+      logger.error({ error, sessionId: session.id }, 'Gate check failed after verification');
+    }
 
     return {
       sessionId: session.id,
