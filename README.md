@@ -57,3 +57,28 @@ src/
 ├── admin/        # Optional web dashboard
 └── util/         # Logging, validation, helpers
 ```
+
+## Demo & Submission
+
+| Document | Description |
+|----------|-------------|
+| [DEMO.md](./DEMO.md) | Demo script + failure playbook |
+| [docs/submission/PITCH_DECK.md](./docs/submission/PITCH_DECK.md) | Pitch deck outline |
+| [docs/submission/VIDEO_GUIDE.md](./docs/submission/VIDEO_GUIDE.md) | Video recording guide |
+
+## Features
+
+- **Token Gate Setup** - Admin wizard in Telegram DM
+- **Ownership Proof** - Micro-tx verification (prevents address copying)
+- **FT/NFT Support** - Gate by fungible token balance or NFT count
+- **Auto Enforcement** - Scheduled rechecks + grace period handling
+- **Admin Commands** - /settings, /members, /audit, /export, /pause, /resume
+
+## Architecture
+
+Built with:
+- TypeScript + Node.js 20
+- Telegraf (Telegram Bot API)
+- Prisma + SQLite
+- Fulcrum (Electrum Cash Protocol)
+- BCMR for token metadata
