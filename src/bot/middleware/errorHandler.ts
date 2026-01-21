@@ -49,7 +49,9 @@ export async function globalErrorHandler(error: unknown, ctx: Context) {
     if (ctx.callbackQuery) {
       await ctx.answerCbQuery('An error occurred. Please try again later.');
     } else if (ctx.chat) {
-      await ctx.reply('Sorry, an error occurred while processing your request. Please try again later.');
+      await ctx.reply(
+        'Sorry, an error occurred while processing your request. Please try again later.'
+      );
     }
   } catch {
     // If we can't even reply, just log and move on

@@ -2,6 +2,7 @@ import { Telegraf } from 'telegraf';
 import { loadBotConfig } from './config.js';
 import { handleStart } from './commands/start.js';
 import { handleHelp } from './commands/help.js';
+import { handleSetup } from './commands/setup.js';
 import { handleCallbackQuery } from './callbacks/index.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import { createChildLogger } from '../util/logger.js';
@@ -23,6 +24,7 @@ export function createBot(): Telegraf {
   // Register commands
   telegraf.start(handleStart);
   telegraf.help(handleHelp);
+  telegraf.command('setup', handleSetup);
 
   // Register callback query handler
   telegraf.on('callback_query', handleCallbackQuery);
