@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { logger } from './util/logger.js';
 import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
+import { initChainAdapter, shutdownChainAdapter } from './chain/index.js';
+import { startVerifyWorker, stopVerifyWorker } from './verify/worker.js';
 
 async function main() {
   logger.info('BCHubKey starting...');
@@ -11,8 +13,14 @@ async function main() {
   });
 
   try {
+    // Initialize chain adapter
+    await initChainAdapter();
+
     // Start the Telegram bot
     await startBot();
+
+    // Start the verification polling worker
+    startVerifyWorker();
 
     logger.info('BCHubKey initialized successfully');
   } catch (error) {
@@ -25,6 +33,8 @@ async function main() {
 async function cleanup() {
   logger.info('Cleaning up resources...');
   try {
+    stopVerifyWorker();
+    await shutdownChainAdapter();
     await disconnectPrisma();
   } catch (error) {
     logger.error({ error }, 'Error during cleanup');
