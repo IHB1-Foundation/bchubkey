@@ -12,6 +12,12 @@ import {
   getActiveSession,
   formatSessionInstructions,
 } from '../../verify/session.js';
+import {
+  MessageBuilder,
+  ButtonLabels,
+  Messages,
+  truncate,
+} from '../util/messages.js';
 
 const logger = createChildLogger('bot:callback:verify');
 
@@ -56,7 +62,7 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
   const state = getVerifyFlowState(userId);
 
   if (!state || !state.address) {
-    await ctx.editMessageText('Session expired. Please use the group link to start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -69,7 +75,14 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
   });
 
   if (!gateRule || !gateRule.verifyAddress) {
-    await ctx.editMessageText('Configuration error. Please contact the group admin.');
+    const msg = new MessageBuilder()
+      .title('Configuration Error')
+      .blank()
+      .text('Ownership proof is not properly configured.')
+      .blank()
+      .action('Contact the group admin.')
+      .build();
+    await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
     return;
   }
 
@@ -85,9 +98,9 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
     await ctx.editMessageText(formatSessionInstructions(existingSession), {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
-        [Markup.button.callback("I've Sent It", 'verify_sent')],
-        [Markup.button.callback('Refresh Status', 'verify_refresh')],
-        [Markup.button.callback('Cancel', 'verify_cancel')],
+        [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
+        [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
+        [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
       ]),
     });
     return;
@@ -105,9 +118,12 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
   });
 
   if (!result.success || !result.session) {
-    await ctx.editMessageText(`*Error*\n\n${result.error ?? 'Failed to create session.'}`, {
-      parse_mode: 'Markdown',
-    });
+    const msg = new MessageBuilder()
+      .title('Error')
+      .blank()
+      .text(result.error ?? 'Failed to create session.')
+      .build();
+    await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
     return;
   }
 
@@ -121,9 +137,9 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
   await ctx.editMessageText(formatSessionInstructions(result.session), {
     parse_mode: 'Markdown',
     ...Markup.inlineKeyboard([
-      [Markup.button.callback("I've Sent It", 'verify_sent')],
-      [Markup.button.callback('Refresh Status', 'verify_refresh')],
-      [Markup.button.callback('Cancel', 'verify_cancel')],
+      [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
+      [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
+      [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
     ]),
   });
 
@@ -136,7 +152,7 @@ async function handleProceed(ctx: Context, userId: string, groupId: string | und
 async function handleChangeAddress(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state) {
-    await ctx.editMessageText('Session expired. Please use the group link to start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -147,12 +163,15 @@ async function handleChangeAddress(ctx: Context, userId: string) {
     sessionId: undefined,
   });
 
-  await ctx.editMessageText(
-    `*Change Address*\n\n` +
-      `Please send your new BCH address (cashaddr format).\n\n` +
-      `Example: \`bitcoincash:qz...\``,
-    { parse_mode: 'Markdown' }
-  );
+  const msg = new MessageBuilder()
+    .title('Change Address')
+    .blank()
+    .text('Please send your new BCH address (cashaddr format).')
+    .blank()
+    .code('bitcoincash:qz...')
+    .build();
+
+  await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
 
   logger.info({ userId }, 'User changing address');
 }
@@ -160,7 +179,7 @@ async function handleChangeAddress(ctx: Context, userId: string) {
 async function handleSentClick(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state?.sessionId) {
-    await ctx.editMessageText('Session expired. Please start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -170,7 +189,7 @@ async function handleSentClick(ctx: Context, userId: string) {
   });
 
   if (!session || session.status !== 'PENDING') {
-    await ctx.editMessageText('Session has expired or already been processed. Please start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -180,25 +199,29 @@ async function handleSentClick(ctx: Context, userId: string) {
       where: { id: session.id },
       data: { status: 'EXPIRED' },
     });
-    await ctx.editMessageText('Session has expired. Please start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
   // Update message to show checking status
-  await ctx.editMessageText(
-    `*Checking for your transaction...*\n\n` +
-      `Looking for ${session.amountSat} sats sent to:\n` +
-      `\`${session.verificationAddress}\`\n\n` +
-      `This will be verified by the polling worker (T-024).\n` +
-      `Click Refresh to check again.`,
-    {
-      parse_mode: 'Markdown',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback('Refresh Status', 'verify_refresh')],
-        [Markup.button.callback('Cancel', 'verify_cancel')],
-      ]),
-    }
-  );
+  const msg = new MessageBuilder()
+    .title('Checking Transaction')
+    .blank()
+    .text(`Looking for ${session.amountSat} sats sent to:`)
+    .code(truncate(session.verificationAddress, 40))
+    .blank()
+    .text('The polling worker will verify your transaction.')
+    .blank()
+    .action('Click Refresh to check status.')
+    .build();
+
+  await ctx.editMessageText(msg, {
+    parse_mode: 'Markdown',
+    ...Markup.inlineKeyboard([
+      [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
+      [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
+    ]),
+  });
 
   updateVerifyFlowState(userId, { step: 'CHECKING' });
 
@@ -208,7 +231,7 @@ async function handleSentClick(ctx: Context, userId: string) {
 async function handleRefresh(ctx: Context, userId: string) {
   const state = getVerifyFlowState(userId);
   if (!state?.sessionId) {
-    await ctx.editMessageText('Session expired. Please start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -218,45 +241,30 @@ async function handleRefresh(ctx: Context, userId: string) {
   });
 
   if (!session) {
-    await ctx.editMessageText('Session not found. Please start again.');
+    await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
     return;
   }
 
   switch (session.status) {
     case 'SUCCESS':
-      await ctx.editMessageText(
-        `*Verification Complete!* ✅\n\n` +
-          `Your address ownership has been verified.\n` +
-          `Transaction: \`${session.txid ?? 'confirmed'}\`\n\n` +
-          `Token balance check will run automatically.`,
-        { parse_mode: 'Markdown' }
-      );
+      await ctx.editMessageText(Messages.verificationSuccess(session.txid ?? undefined), {
+        parse_mode: 'Markdown',
+      });
       deleteVerifyFlowState(userId);
       break;
 
     case 'FAILED':
-      await ctx.editMessageText(
-        `*Verification Failed* ❌\n\n` +
-          `We couldn't verify your address ownership.\n` +
-          `The transaction inputs didn't match your claimed address.\n\n` +
-          `Please try again with a standard P2PKH wallet.`,
-        {
-          parse_mode: 'Markdown',
-          ...Markup.inlineKeyboard([
-            [Markup.button.callback('Try Again', 'verify_change_address')],
-          ]),
-        }
-      );
+      await ctx.editMessageText(Messages.verificationFailed(), {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback(ButtonLabels.TRY_AGAIN, 'verify_change_address')],
+        ]),
+      });
       deleteVerifyFlowState(userId);
       break;
 
     case 'EXPIRED':
-      await ctx.editMessageText(
-        `*Session Expired* ⏰\n\n` +
-          `Your verification session has expired.\n` +
-          `Please start again.`,
-        { parse_mode: 'Markdown' }
-      );
+      await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
       deleteVerifyFlowState(userId);
       break;
 
@@ -266,21 +274,16 @@ async function handleRefresh(ctx: Context, userId: string) {
           where: { id: session.id },
           data: { status: 'EXPIRED' },
         });
-        await ctx.editMessageText(
-          `*Session Expired* ⏰\n\n` +
-            `Your verification session has expired.\n` +
-            `Please start again.`,
-          { parse_mode: 'Markdown' }
-        );
+        await ctx.editMessageText(Messages.sessionExpired(), { parse_mode: 'Markdown' });
         deleteVerifyFlowState(userId);
       } else {
         // Still pending - show instructions again
         await ctx.editMessageText(formatSessionInstructions(session), {
           parse_mode: 'Markdown',
           ...Markup.inlineKeyboard([
-            [Markup.button.callback("I've Sent It", 'verify_sent')],
-            [Markup.button.callback('Refresh Status', 'verify_refresh')],
-            [Markup.button.callback('Cancel', 'verify_cancel')],
+            [Markup.button.callback(ButtonLabels.SENT_IT, 'verify_sent')],
+            [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
+            [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
           ]),
         });
       }
@@ -305,9 +308,7 @@ async function handleCancel(
 
   deleteVerifyFlowState(userId);
 
-  await ctx.editMessageText(
-    'Verification cancelled.\n\nUse the group link to start again when ready.'
-  );
+  await ctx.editMessageText(Messages.verificationCancelled(), { parse_mode: 'Markdown' });
 
   logger.info({ userId }, 'Verification cancelled by user');
 }

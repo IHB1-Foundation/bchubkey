@@ -329,7 +329,7 @@
     - [x] Key terms are consistent across bot messages and dashboard UI
 
 ### T-071: Telegram message design system + copy pass
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Make Telegram UX feel polished and predictable with consistent formatting and tone.
 - Tasks:
@@ -338,9 +338,9 @@
     - Copy pass on `/start`, verification intro, micro-tx instructions, PASS/FAIL messages
     - Ensure messages are readable on mobile (short lines, scannable sections)
 - Acceptance Criteria:
-    - [ ] Verification flow messages share consistent layout (title → requirements → next step)
-    - [ ] Buttons are consistently named and placed across steps
-    - [ ] Error messages include “what happened + what to do next”
+    - [x] Verification flow messages share consistent layout (title → requirements → next step)
+    - [x] Buttons are consistently named and placed across steps
+    - [x] Error messages include "what happened + what to do next"
 
 ### T-072: Verification flow progress UI (stepper + state clarity)
 - Status: TODO

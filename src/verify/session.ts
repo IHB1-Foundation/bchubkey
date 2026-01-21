@@ -154,22 +154,27 @@ export async function expireSession(sessionId: string): Promise<void> {
 
 export function formatSessionInstructions(session: VerifySession): string {
   const expiresIn = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 60000));
+  const truncatedAddress =
+    session.address.length > 34 ? `${session.address.slice(0, 30)}...` : session.address;
 
   return [
-    `*Micro-Transaction Verification*`,
+    `*Step 2 of 3: Ownership Proof*`,
     ``,
-    `To prove you control this address, send exactly:`,
+    `Send exactly *${session.amountSat} satoshis* to prove ownership.`,
     ``,
-    `*${session.amountSat} satoshis*`,
-    ``,
-    `To this address:`,
+    `*Send to:*`,
     `\`${session.verificationAddress}\``,
     ``,
-    `Your claimed address:`,
-    `\`${session.address.slice(0, 30)}...\``,
+    `*From your address:*`,
+    `\`${truncatedAddress}\``,
     ``,
-    `⏱ Session expires in *${expiresIn} minutes*`,
+    `*Time remaining:* ${expiresIn} min`,
     ``,
-    `_After sending, click "I've Sent It" to verify._`,
+    `*Important:*`,
+    `• Amount must be exact (${session.amountSat} sats)`,
+    `• Must send *from* your claimed address`,
+    `• Use a standard P2PKH wallet`,
+    ``,
+    `_Click "I've Sent It" after sending._`,
   ].join('\n');
 }

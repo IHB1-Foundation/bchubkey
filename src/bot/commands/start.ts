@@ -2,6 +2,12 @@ import type { Context } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { prisma } from '../../db/client.js';
 import { createVerifyFlowState, getVerifyFlowState } from '../../verify/state.js';
+import {
+  MessageBuilder,
+  escapeMarkdown,
+  formatTokenId,
+  Messages,
+} from '../util/messages.js';
 
 const logger = createChildLogger('bot:cmd:start');
 
@@ -30,26 +36,39 @@ export async function handleStart(ctx: Context) {
   // Check if user has an active verification flow
   const existingFlow = getVerifyFlowState(userId.toString());
   if (existingFlow && existingFlow.step === 'AWAITING_ADDRESS') {
-    await ctx.reply(
-      `You have an active verification in progress for *${escapeMarkdown(existingFlow.groupTitle)}*.\n\n` +
-        `Please send your BCH address (cashaddr format) to continue.\n\n` +
-        `Or type /cancel to stop.`,
-      { parse_mode: 'Markdown' }
-    );
+    const msg = new MessageBuilder()
+      .title('Verification In Progress')
+      .blank()
+      .field('Group', escapeMarkdown(existingFlow.groupTitle))
+      .blank()
+      .text('Please send your BCH address (cashaddr format) to continue.')
+      .blank()
+      .note('Type /cancel to stop.')
+      .build();
+
+    await ctx.reply(msg, { parse_mode: 'Markdown' });
     return;
   }
 
   // Standard /start in DM
-  await ctx.reply(
-    `Welcome to BCHubKey!\n\n` +
-      `I help manage token-gated Telegram groups using CashTokens.\n\n` +
-      `If you're a group admin, add me to your group and run /setup.\n` +
-      `If you're verifying for a group, use the deep link provided by the group admin.\n\n` +
-      `Commands:\n` +
-      `/help - Show available commands\n` +
-      `/status - Check your verification status\n` +
-      `/privacy - Learn what data we store`
-  );
+  const welcomeMsg = new MessageBuilder()
+    .title('Welcome to BCHubKey')
+    .blank()
+    .text('I help manage token-gated Telegram groups using CashTokens.')
+    .blank()
+    .section('Getting Started', [
+      'Group admins: Add me to your group and run /setup',
+      'Members: Use the deep link provided by the group admin',
+    ])
+    .blank()
+    .section('Commands', [
+      '/help - Show available commands',
+      '/status - Check your verification status',
+      '/privacy - Learn what data we store',
+    ])
+    .build();
+
+  await ctx.reply(welcomeMsg, { parse_mode: 'Markdown' });
 }
 
 async function handleDeepLinkVerification(ctx: Context, userId: number, payload: string) {
@@ -57,7 +76,7 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
   const parts = payload.split('_');
   if (parts.length !== 3 || parts[0] !== 'g') {
     logger.warn({ userId, payload }, 'Invalid deep link format');
-    await ctx.reply('Invalid verification link. Please use the link provided by the group admin.');
+    await ctx.reply(Messages.invalidLink(), { parse_mode: 'Markdown' });
     return;
   }
 
@@ -79,25 +98,32 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
 
   if (!group) {
     logger.warn({ userId, groupId }, 'Group not found for deep link');
-    await ctx.reply('Invalid verification link. The group may no longer be configured.');
+    await ctx.reply(Messages.invalidLink(), { parse_mode: 'Markdown' });
     return;
   }
 
   if (group.setupCode !== setupCode) {
     logger.warn({ userId, groupId }, 'Setup code mismatch');
-    await ctx.reply('Invalid verification link. Please request a new link from the group admin.');
+    await ctx.reply(Messages.invalidLink(), { parse_mode: 'Markdown' });
     return;
   }
 
   if (group.status !== 'ACTIVE') {
     logger.info({ userId, groupId, status: group.status }, 'Group is paused');
-    await ctx.reply('Verification is currently paused for this group. Please try again later.');
+    await ctx.reply(Messages.groupPaused(), { parse_mode: 'Markdown' });
     return;
   }
 
   if (group.gateRules.length === 0) {
     logger.warn({ userId, groupId }, 'No gate rules found');
-    await ctx.reply('This group has not been fully configured yet. Please contact the admin.');
+    const msg = new MessageBuilder()
+      .title('Setup Incomplete')
+      .blank()
+      .text('This group has not been fully configured yet.')
+      .blank()
+      .action('Contact the group admin.')
+      .build();
+    await ctx.reply(msg, { parse_mode: 'Markdown' });
     return;
   }
 
@@ -105,7 +131,14 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
 
   if (!rule.verifyAddress) {
     logger.warn({ userId, groupId }, 'No verification address configured');
-    await ctx.reply('Verification is not properly configured. Please contact the admin.');
+    const msg = new MessageBuilder()
+      .title('Configuration Error')
+      .blank()
+      .text('Ownership proof is not properly configured.')
+      .blank()
+      .action('Contact the group admin.')
+      .build();
+    await ctx.reply(msg, { parse_mode: 'Markdown' });
     return;
   }
 
@@ -140,25 +173,27 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
   );
 
   // Show gate requirements and prompt for address
-  const summary = [
-    `*Token Gate Verification*`,
-    ``,
-    `*Group:* ${escapeMarkdown(group.title)}`,
-    ``,
-    `*Requirements:*`,
-    `• Token Type: ${rule.gateType}`,
-    `• Token ID: \`${rule.tokenId.slice(0, 16)}...\``,
-    `• Minimum: ${threshold}`,
-    ``,
-    `*Verification Process:*`,
-    `1. Submit your BCH address`,
-    `2. Send a small amount (${rule.verifyMinSat}-${rule.verifyMaxSat} sats) to prove ownership`,
-    `3. Token balance will be checked automatically`,
-    ``,
-    `*Please send your BCH address now* (cashaddr format).`,
-    ``,
-    `Example: \`bitcoincash:qz...\``,
-  ].join('\n');
+  const summary = new MessageBuilder()
+    .step(1, 3, 'Submit Address')
+    .blank()
+    .field('Group', escapeMarkdown(group.title))
+    .blank()
+    .section('Gate Requirements', [
+      `Token Type: ${rule.gateType}`,
+      `Token ID: \`${formatTokenId(rule.tokenId)}\``,
+      `Minimum: ${threshold}`,
+    ])
+    .blank()
+    .section('Verification Process', [
+      'Submit your BCH address',
+      `Prove ownership (send ${rule.verifyMinSat}-${rule.verifyMaxSat} sats)`,
+      'Gate Check runs automatically',
+    ])
+    .blank()
+    .action('Send your BCH address now (cashaddr format).')
+    .blank()
+    .code('bitcoincash:qz...')
+    .build();
 
   await ctx.reply(summary, { parse_mode: 'Markdown' });
 
@@ -187,8 +222,4 @@ function formatThreshold(rule: {
   } else {
     return `${rule.minNftCount ?? 1} NFT(s)`;
   }
-}
-
-function escapeMarkdown(text: string): string {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }

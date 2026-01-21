@@ -7,39 +7,38 @@ const USER_HELP = `
 *BCHubKey Help*
 
 *User Commands:*
-/status - Check your verification status and token balances
-/link - Link or change your BCH address (requires re-verification)
-/verify - Restart ownership verification
-/recheck - Request immediate token balance re-check
-/help - Show this help message
-/privacy - Learn what data we store
+• /status - Check verification status and balances
+• /link - Change your BCH address (requires re-verification)
+• /verify - Restart ownership proof
+• /recheck - Request immediate Gate Check
+• /help - Show this help
+• /privacy - Data we store
 
-*How it works:*
-1. Click the verification deep link from a group
-2. Submit your BCH address (cashaddr format)
-3. Send a small amount to prove ownership
-4. Token balance is checked automatically
-5. Access is granted or denied based on holdings
+*How It Works:*
+1. Click the verification link from a group
+2. Submit your BCH address (cashaddr)
+3. Complete Ownership Proof (micro-transaction)
+4. Gate Check runs automatically
+5. Access granted if you hold required tokens
 `.trim();
 
 const ADMIN_HELP = `
 *BCHubKey Admin Help*
 
 *Admin Commands:*
-/setup - Configure token gating for this group
-/settings - Show current gate settings
-/gate set <tokenId> <min> - Quick update gate token and minimum
-/gate mode <join|restrict> - Set join handling mode
-/gate grace <minutes> - Set grace period
-/gate interval <minutes> - Set recheck interval
-/members - Show PASS/FAIL/PENDING member summary
-/audit <@user or id> - Show user verification details
-/export - Export membership data as CSV
-/pause - Pause enforcement
-/resume - Resume enforcement
-/banfail on|off - Toggle restrict vs kick on fail
+• /setup - Configure token gating
+• /settings - Show current gate settings
+• /gate set <tokenId> <min> - Update gate token
+• /gate mode <join|restrict> - Set join mode
+• /gate grace <minutes> - Set grace period
+• /gate interval <minutes> - Set recheck interval
+• /members - PASS/FAIL/PENDING summary
+• /audit <@user or id> - User details
+• /export - Export membership CSV
+• /pause /resume - Pause/resume enforcement
+• /banfail on|off - Restrict vs Remove on fail
 
-*Setup steps:*
+*Setup Steps:*
 1. Add bot to group as admin
 2. Grant restrict and ban permissions
 3. Run /setup to configure gating
