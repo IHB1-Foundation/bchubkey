@@ -1,0 +1,228 @@
+// BCHubKey Prisma Schema
+// See PROJECT.md Section 9 for data model documentation
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum GroupMode {
+  JOIN_REQUEST
+  RESTRICT
+}
+
+enum GroupStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum GateType {
+  FT
+  NFT
+}
+
+enum ActionOnFail {
+  RESTRICT
+  KICK
+}
+
+enum AddressType {
+  P2PKH
+  P2SH
+  UNKNOWN
+}
+
+enum VerifyMethod {
+  MICRO_TX
+  SIGNATURE
+}
+
+enum VerifySessionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+enum MembershipState {
+  UNKNOWN
+  PENDING_VERIFY
+  VERIFIED_FAIL
+  VERIFIED_PASS
+}
+
+enum EnforcedStatus {
+  NONE
+  RESTRICTED
+  KICKED
+}
+
+enum AuditLogType {
+  SETUP
+  VERIFY_START
+  VERIFY_SUCCESS
+  VERIFY_FAILED
+  VERIFY_EXPIRED
+  GATE_PASS
+  GATE_FAIL
+  RESTRICT
+  UNRESTRICT
+  KICK
+  RECHECK
+  GRACE_START
+  GRACE_EXPIRED
+  ERROR
+}
+
+// ============================================
+// Models
+// ============================================
+
+/// Telegram group/supergroup configuration
+model Group {
+  id         String      @id // Telegram chat_id as string (BigInt)
+  title      String
+  type       String      // supergroup, channel, etc
+  setupCode  String      @map("setup_code")
+  mode       GroupMode   @default(JOIN_REQUEST)
+  status     GroupStatus @default(ACTIVE)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  gateRules   GateRule[]
+  memberships Membership[]
+  auditLogs   AuditLog[]
+  sessions    VerifySession[]
+
+  @@map("groups")
+}
+
+/// Token gating rules per group
+model GateRule {
+  id                 String       @id @default(uuid())
+  groupId            String       @map("group_id")
+  gateType           GateType     @map("gate_type")
+  tokenId            String       @map("token_id")
+  minAmountBase      String?      @map("min_amount_base") // BigInt as string for FT
+  minNftCount        Int?         @map("min_nft_count") // for NFT
+  decimals           Int?         // for display conversion
+  recheckIntervalSec Int          @default(300) @map("recheck_interval_sec")
+  gracePeriodSec     Int          @default(300) @map("grace_period_sec")
+  actionOnFail       ActionOnFail @default(RESTRICT) @map("action_on_fail")
+
+  // Micro-tx verification config
+  verifyAddress      String?      @map("verify_address")
+  verifyMinSat       Int          @default(2000) @map("verify_min_sat")
+  verifyMaxSat       Int          @default(2999) @map("verify_max_sat")
+  verifyExpireMin    Int          @default(10) @map("verify_expire_min")
+
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("gate_rules")
+}
+
+/// Telegram users who interact with the bot
+model User {
+  tgUserId   String   @id @map("tg_user_id") // BigInt as string
+  username   String?
+  firstName  String?  @map("first_name")
+  lastName   String?  @map("last_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  addresses   UserAddress[]
+  memberships Membership[]
+  sessions    VerifySession[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+/// BCH addresses linked to users
+model UserAddress {
+  id          String      @id @default(uuid())
+  tgUserId    String      @map("tg_user_id")
+  address     String
+  addressType AddressType @default(UNKNOWN) @map("address_type")
+  verified    Boolean     @default(false)
+  verifiedAt  DateTime?   @map("verified_at")
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [tgUserId], references: [tgUserId], onDelete: Cascade)
+
+  @@index([tgUserId, active])
+  @@map("user_addresses")
+}
+
+/// Verification sessions for micro-tx ownership proof
+model VerifySession {
+  id                  String              @id @default(uuid())
+  tgUserId            String              @map("tg_user_id")
+  groupId             String              @map("group_id")
+  address             String              // claimed address
+  method              VerifyMethod        @default(MICRO_TX)
+  amountSat           Int                 @map("amount_sat")
+  verificationAddress String              @map("verification_address")
+  expiresAt           DateTime            @map("expires_at")
+  status              VerifySessionStatus @default(PENDING)
+  txid                String?
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [tgUserId], references: [tgUserId], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([status, expiresAt])
+  @@index([groupId, amountSat, status])
+  @@map("verify_sessions")
+}
+
+/// Per-user per-group membership state
+model Membership {
+  id              String          @id @default(uuid())
+  tgUserId        String          @map("tg_user_id")
+  groupId         String          @map("group_id")
+  state           MembershipState @default(UNKNOWN)
+  lastBalanceBase String?         @map("last_balance_base") // BigInt as string
+  lastCheckedAt   DateTime?       @map("last_checked_at")
+  failDetectedAt  DateTime?       @map("fail_detected_at") // grace timer anchor
+  enforced        EnforcedStatus  @default(NONE)
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [tgUserId], references: [tgUserId], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([tgUserId, groupId])
+  @@index([groupId, state])
+  @@map("memberships")
+}
+
+/// Audit log for all critical actions
+model AuditLog {
+  id          String       @id @default(uuid())
+  groupId     String       @map("group_id")
+  tgUserId    String?      @map("tg_user_id")
+  type        AuditLogType
+  payloadJson String       @map("payload_json") // JSON string
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [tgUserId], references: [tgUserId], onDelete: SetNull)
+
+  @@index([groupId, createdAt])
+  @@index([tgUserId, createdAt])
+  @@map("audit_logs")
+}
