@@ -14,7 +14,9 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\""
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "demo": "tsx scripts/demo.ts",
+    "demo:reset": "tsx scripts/demo-reset.ts"
   },
   "dependencies": {
     "@bitauth/libauth": "^3.0.0",
