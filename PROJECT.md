@@ -169,7 +169,7 @@ Flow:
 ### 8.1 High-Level Components
 - **Bot Server**: Node.js + TypeScript
 - **Telegram framework**: Telegraf
-- **DB**: SQLite (hackathon) via Prisma
+- **DB**: MySQL via Prisma (Railway)
 - **Scheduler**: node-cron + DB queries (simple, robust)
 - **Chain Adapter**:
     - Token balance: FT/NFT
@@ -199,7 +199,7 @@ Flow:
 ---
 
 ## 9) Data Model (DB Schema)
-Implement via Prisma (SQLite).
+Implement via Prisma (MySQL).
 
 ### 9.1 `groups`
 - `id` (Telegram chat_id, bigint)
@@ -383,7 +383,7 @@ Key constraint:
 ## 12) Configuration (Environment Variables)
 Required:
 - `TELEGRAM_BOT_TOKEN`
-- `DATABASE_URL` (sqlite, e.g. `file:./dev.db`)
+- `DATABASE_URL` (mysql, e.g. `mysql://bchubkey:bchubkey@localhost:3306/bchubkey`)
 - `BOT_PUBLIC_NAME` or derived bot username for deep link generation
 
 Verification defaults:

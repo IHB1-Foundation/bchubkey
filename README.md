@@ -10,6 +10,7 @@ Automatically gate and manage Telegram groups based on BCH CashTokens holdings, 
 
 - Node.js 20+
 - npm
+- Docker (for local MySQL)
 
 ## Setup
 
@@ -26,6 +27,14 @@ Automatically gate and manage Telegram groups based on BCH CashTokens holdings, 
 3. Edit `.env` and fill in required values:
    - `TELEGRAM_BOT_TOKEN` - Get from @BotFather
    - `BOT_PUBLIC_NAME` - Your bot's username
+
+4. Start MySQL locally and run migrations:
+   ```bash
+   docker compose up -d mysql
+   npx prisma migrate dev
+   ```
+
+Deploying to Railway: see `docs/DEPLOY_RAILWAY.md`.
 
 ## Development
 
@@ -103,7 +112,7 @@ Demo mode enables:
 Built with:
 - **TypeScript + Node.js 20** - Type-safe, modern runtime
 - **Telegraf** - Telegram Bot API framework
-- **Prisma + SQLite** - Type-safe ORM with lightweight database
+- **Prisma + MySQL** - Type-safe ORM with Railway-compatible database
 - **Fulcrum** - Electrum Cash Protocol for chain queries
 - **BCMR** - Token metadata resolution
 

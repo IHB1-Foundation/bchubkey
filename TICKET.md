@@ -36,7 +36,7 @@
     - [ ] `npm run format` works
     - [ ] `.env.example` exists and is complete enough to run
 
-### T-001: Prisma + SQLite schema and migrations
+### T-001: Prisma + MySQL schema and migrations
 - Status: DONE
 - Priority: P0
 - Goal: Implement DB schema in Prisma and run migrations locally.
@@ -45,6 +45,7 @@
     - Add required indexes
     - Create repository helpers (thin CRUD)
 - Acceptance Criteria:
+    - [ ] `docker compose up -d mysql` starts the local DB
     - [ ] `npx prisma migrate dev` succeeds
     - [ ] Prisma client can create/read sample records in a smoke script
     - [ ] Tables reflect PROJECT.md schema

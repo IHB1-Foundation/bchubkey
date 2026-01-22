@@ -82,9 +82,9 @@
       <text x="50" y="27" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)">Recheck + Grace</text>
     </g>
     <g transform="translate(15, 135)">
-      <!-- Prisma/SQLite -->
+      <!-- Prisma/MySQL -->
       <rect width="210" height="30" rx="4" fill="rgba(139,233,253,0.15)"/>
-      <text x="105" y="18" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Prisma + SQLite</text>
+      <text x="105" y="18" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Prisma + MySQL</text>
     </g>
   </g>
 

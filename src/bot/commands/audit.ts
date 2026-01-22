@@ -48,7 +48,7 @@ export async function handleAudit(ctx: Context) {
 
   // Try to parse as @username or numeric ID
   if (userArg.startsWith('@')) {
-    // Look up by username (SQLite doesn't support case-insensitive mode)
+    // Look up by username (Telegram usernames are case-insensitive)
     const username = userArg.slice(1);
     const user = await prisma.user.findFirst({
       where: {
