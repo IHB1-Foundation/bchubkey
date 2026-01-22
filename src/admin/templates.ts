@@ -813,6 +813,90 @@ const STYLES = `
     border-color: var(--color-pass-text);
   }
 
+  /* Health indicators and status bar */
+  .status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .status-indicators {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .status-dot.healthy {
+    background: var(--color-pass-text);
+  }
+
+  .status-dot.warning {
+    background: var(--color-pending-text);
+  }
+
+  .status-dot.error {
+    background: var(--color-fail-text);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .status-label {
+    color: var(--color-text-secondary);
+  }
+
+  .last-updated {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+  }
+
+  .auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .auto-refresh-toggle input {
+    cursor: pointer;
+  }
+
+  .auto-refresh-toggle label {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .refresh-countdown {
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+  }
+
   .empty {
     color: var(--color-text-muted);
     font-style: italic;
@@ -1073,6 +1157,102 @@ const LOG_SCRIPT = `
 </script>
 `;
 
+// Auto-refresh JavaScript
+const REFRESH_SCRIPT = `
+<script>
+(function() {
+  const REFRESH_INTERVAL = 30000; // 30 seconds
+  const STORAGE_KEY = 'bchubkey-autorefresh';
+
+  let refreshTimer = null;
+  let countdown = REFRESH_INTERVAL / 1000;
+  let countdownTimer = null;
+
+  const checkbox = document.getElementById('auto-refresh-toggle');
+  const countdownEl = document.getElementById('refresh-countdown');
+  const lastUpdatedEl = document.getElementById('last-updated-time');
+
+  function getAutoRefreshState() {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setAutoRefreshState(enabled) {
+    try {
+      localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
+    } catch (e) {}
+  }
+
+  function startAutoRefresh() {
+    if (refreshTimer) return;
+    countdown = REFRESH_INTERVAL / 1000;
+    updateCountdown();
+
+    countdownTimer = setInterval(function() {
+      countdown--;
+      updateCountdown();
+    }, 1000);
+
+    refreshTimer = setInterval(function() {
+      window.location.reload();
+    }, REFRESH_INTERVAL);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+    if (countdownEl) {
+      countdownEl.textContent = '';
+    }
+  }
+
+  function updateCountdown() {
+    if (countdownEl) {
+      countdownEl.textContent = '(' + countdown + 's)';
+    }
+  }
+
+  function updateLastUpdated() {
+    if (lastUpdatedEl) {
+      lastUpdatedEl.textContent = new Date().toLocaleTimeString();
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    updateLastUpdated();
+
+    if (checkbox) {
+      const enabled = getAutoRefreshState();
+      checkbox.checked = enabled;
+
+      if (enabled) {
+        startAutoRefresh();
+      }
+
+      checkbox.addEventListener('change', function() {
+        setAutoRefreshState(this.checked);
+        if (this.checked) {
+          startAutoRefresh();
+        } else {
+          stopAutoRefresh();
+        }
+      });
+    }
+  });
+})();
+</script>
+`;
+
 function layout(title: string, content: string, breadcrumb?: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1106,6 +1286,7 @@ function layout(title: string, content: string, breadcrumb?: string): string {
   </div>
   ${THEME_SCRIPT}
   ${LOG_SCRIPT}
+  ${REFRESH_SCRIPT}
 </body>
 </html>`;
 }
@@ -1372,6 +1553,42 @@ function generatePagination(groupId: string, filters: MemberFilters): string {
   `;
 }
 
+// Helper: Generate status bar with health indicators and auto-refresh
+function generateStatusBar(stats: GroupStats | undefined): string {
+  const hasRecentActivity = stats?.lastRecheckAt
+    ? Date.now() - new Date(stats.lastRecheckAt).getTime() < 5 * 60 * 1000
+    : false;
+
+  const systemStatus = hasRecentActivity ? 'healthy' : 'warning';
+  const systemLabel = hasRecentActivity ? 'System Active' : 'Awaiting Activity';
+
+  return `
+    <div class="status-bar">
+      <div class="status-indicators">
+        <div class="status-indicator">
+          <span class="status-dot ${systemStatus}"></span>
+          <span class="status-label">${systemLabel}</span>
+        </div>
+        ${
+          stats?.lastRecheckAt
+            ? `<div class="status-indicator">
+              <span class="status-label">Last Recheck: ${formatRelativeTime(stats.lastRecheckAt)}</span>
+            </div>`
+            : ''
+        }
+      </div>
+      <div class="last-updated">
+        <span>Updated: <span id="last-updated-time">-</span></span>
+        <span class="refresh-countdown" id="refresh-countdown"></span>
+        <div class="auto-refresh-toggle">
+          <input type="checkbox" id="auto-refresh-toggle" />
+          <label for="auto-refresh-toggle">Auto-refresh</label>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // Helper: Generate SVG donut chart
 function generateDonutChart(
   pass: number,
@@ -1565,6 +1782,9 @@ export function groupDetailPage(
   const tableControls = generateTableControls(group.id, activeFilters);
   const pagination = generatePagination(group.id, activeFilters);
 
+  // Generate status bar
+  const statusBar = generateStatusBar(stats);
+
   const memberRows =
     members.length === 0
       ? '<tr><td colspan="6" class="empty">No members matching filters</td></tr>'
@@ -1684,6 +1904,8 @@ export function groupDetailPage(
     : '<div class="empty">No gate rule configured</div>';
 
   const content = `
+    ${statusBar}
+
     <div class="overview-row">
       <div class="overview-stats">
         <div class="stats" style="margin-bottom: 0">
