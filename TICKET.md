@@ -396,8 +396,8 @@
     - [ ] Dark mode toggle works and persists across refresh
     - [ ] Pages remain readable and clean on common viewport sizes
 
-### T-081: Dashboard “at-a-glance” stats + lightweight charts
-- Status: TODO
+### T-081: Dashboard "at-a-glance" stats + lightweight charts
+- Status: DONE
 - Priority: P0
 - Goal: Provide an impressive overview (counts, health, trends) without heavy dependencies.
 - Tasks:
