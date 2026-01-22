@@ -677,6 +677,142 @@ const STYLES = `
     color: var(--color-text-secondary);
   }
 
+  /* Enhanced log entries */
+  .log-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    align-items: center;
+  }
+
+  .log-filters select,
+  .log-filters input {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+  }
+
+  .log-filters input {
+    width: 120px;
+  }
+
+  .log-filters label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .log-filters input[type="checkbox"] {
+    width: auto;
+  }
+
+  .log-entry-enhanced {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-xs);
+    background: var(--color-bg-card);
+    transition: background var(--transition-fast);
+  }
+
+  .log-entry-enhanced:hover {
+    background: var(--color-bg-table-hover);
+  }
+
+  .log-entry-enhanced:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .log-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+  }
+
+  .log-expand-icon {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    transition: transform var(--transition-fast);
+    width: 12px;
+  }
+
+  .log-entry-enhanced.expanded .log-expand-icon {
+    transform: rotate(90deg);
+  }
+
+  .log-type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .log-type-badge.pass { background: var(--color-pass-bg); color: var(--color-pass-text); }
+  .log-type-badge.fail { background: var(--color-fail-bg); color: var(--color-fail-text); }
+  .log-type-badge.action { background: var(--color-pending-bg); color: var(--color-pending-text); }
+  .log-type-badge.neutral { background: var(--color-paused-bg); color: var(--color-paused-text); }
+
+  .log-payload {
+    display: none;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-page);
+    border-radius: var(--radius-sm);
+    position: relative;
+  }
+
+  .log-entry-enhanced.expanded .log-payload {
+    display: block;
+  }
+
+  .log-payload pre {
+    margin: 0;
+    font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--color-text-primary);
+  }
+
+  .log-copy-btn {
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    padding: 2px 6px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .log-copy-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border-color: var(--color-primary);
+  }
+
+  .log-copy-btn.copied {
+    background: var(--color-pass-bg);
+    color: var(--color-pass-text);
+    border-color: var(--color-pass-text);
+  }
+
   .empty {
     color: var(--color-text-muted);
     font-style: italic;
@@ -850,6 +986,93 @@ const THEME_SCRIPT = `
 </script>
 `;
 
+// Audit log viewer JavaScript
+const LOG_SCRIPT = `
+<script>
+(function() {
+  // Log entry expand/collapse
+  document.addEventListener('click', function(e) {
+    const header = e.target.closest('.log-header');
+    if (header) {
+      const entry = header.closest('.log-entry-enhanced');
+      if (entry) {
+        entry.classList.toggle('expanded');
+      }
+    }
+  });
+
+  // Copy payload to clipboard
+  document.addEventListener('click', function(e) {
+    const copyBtn = e.target.closest('.log-copy-btn');
+    if (copyBtn) {
+      e.stopPropagation();
+      const payload = copyBtn.getAttribute('data-payload');
+      if (payload) {
+        navigator.clipboard.writeText(payload).then(function() {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }).catch(function() {
+          copyBtn.textContent = 'Failed';
+          setTimeout(function() {
+            copyBtn.textContent = 'Copy';
+          }, 2000);
+        });
+      }
+    }
+  });
+
+  // Log filters - client-side filtering for quick response
+  const logFilters = document.getElementById('log-filters');
+  if (logFilters) {
+    const typeFilter = logFilters.querySelector('[name="logType"]');
+    const userFilter = logFilters.querySelector('[name="logUser"]');
+    const failuresOnly = logFilters.querySelector('[name="failuresOnly"]');
+    const logEntries = document.querySelectorAll('.log-entry-enhanced');
+
+    const failureTypes = ['GATE_FAIL', 'VERIFY_FAIL', 'RESTRICT', 'KICK', 'ERROR'];
+
+    function applyFilters() {
+      const selectedType = typeFilter ? typeFilter.value : 'all';
+      const userId = userFilter ? userFilter.value.trim() : '';
+      const showFailuresOnly = failuresOnly ? failuresOnly.checked : false;
+
+      logEntries.forEach(function(entry) {
+        const entryType = entry.getAttribute('data-type');
+        const entryUser = entry.getAttribute('data-user') || '';
+
+        let show = true;
+
+        // Type filter
+        if (selectedType && selectedType !== 'all' && entryType !== selectedType) {
+          show = false;
+        }
+
+        // Failures only filter
+        if (showFailuresOnly && !failureTypes.includes(entryType)) {
+          show = false;
+        }
+
+        // User filter
+        if (userId && !entryUser.includes(userId)) {
+          show = false;
+        }
+
+        entry.style.display = show ? '' : 'none';
+      });
+    }
+
+    if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+    if (userFilter) userFilter.addEventListener('input', applyFilters);
+    if (failuresOnly) failuresOnly.addEventListener('change', applyFilters);
+  }
+})();
+</script>
+`;
+
 function layout(title: string, content: string, breadcrumb?: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -882,6 +1105,7 @@ function layout(title: string, content: string, breadcrumb?: string): string {
     ${content}
   </div>
   ${THEME_SCRIPT}
+  ${LOG_SCRIPT}
 </body>
 </html>`;
 }
@@ -1359,25 +1583,62 @@ export function groupDetailPage(
           )
           .join('');
 
+  // Get unique log types for filter dropdown
+  const logTypes = [...new Set(logs.map((l) => l.type))].sort();
+
+  // Helper to get badge class for log type
+  const getLogTypeBadgeClass = (type: string): string => {
+    const passTypes = ['GATE_PASS', 'VERIFY_SUCCESS', 'UNRESTRICT'];
+    const failTypes = ['GATE_FAIL', 'VERIFY_FAIL', 'RESTRICT', 'KICK', 'ERROR'];
+    const actionTypes = ['SETUP', 'RECHECK'];
+    if (passTypes.includes(type)) return 'pass';
+    if (failTypes.includes(type)) return 'fail';
+    if (actionTypes.includes(type)) return 'action';
+    return 'neutral';
+  };
+
+  // Log filters HTML
+  const logFiltersHtml = `
+    <form id="log-filters" class="log-filters">
+      <select name="logType">
+        <option value="all">All Types</option>
+        ${logTypes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+      </select>
+      <input type="text" name="logUser" placeholder="User ID..." />
+      <label>
+        <input type="checkbox" name="failuresOnly" />
+        Failures only
+      </label>
+    </form>
+  `;
+
   const logRows =
     logs.length === 0
       ? '<div class="empty">No audit logs</div>'
       : logs
           .map((l) => {
-            let payload = '';
+            let prettyPayload = '';
+            let rawPayload = l.payloadJson;
             try {
               const p = JSON.parse(l.payloadJson);
-              payload = JSON.stringify(p, null, 0);
-              if (payload.length > 100) payload = payload.slice(0, 100) + '...';
+              prettyPayload = JSON.stringify(p, null, 2);
+              rawPayload = l.payloadJson;
             } catch {
-              payload = l.payloadJson.slice(0, 100);
+              prettyPayload = l.payloadJson;
             }
+            const badgeClass = getLogTypeBadgeClass(l.type);
             return `
-          <div class="log-entry">
-            <span class="log-time">${formatDate(l.createdAt)}</span>
-            <span class="log-type">[${escapeHtml(l.type)}]</span>
-            ${l.tgUserId ? `<span class="mono">user:${escapeHtml(l.tgUserId)}</span>` : ''}
-            <span class="mono" style="color:var(--color-text-secondary)">${escapeHtml(payload)}</span>
+          <div class="log-entry-enhanced" data-type="${escapeHtml(l.type)}" data-user="${escapeHtml(l.tgUserId || '')}">
+            <div class="log-header">
+              <span class="log-expand-icon">&#9654;</span>
+              <span class="log-type-badge ${badgeClass}">${escapeHtml(l.type)}</span>
+              <span class="log-time">${formatDate(l.createdAt)}</span>
+              ${l.tgUserId ? `<span class="mono">user:${escapeHtml(l.tgUserId)}</span>` : ''}
+            </div>
+            <div class="log-payload">
+              <button type="button" class="log-copy-btn" data-payload="${escapeHtml(rawPayload)}">Copy</button>
+              <pre>${escapeHtml(prettyPayload)}</pre>
+            </div>
           </div>
         `;
           })
@@ -1522,6 +1783,7 @@ export function groupDetailPage(
 
     <div class="card">
       <h2>Audit Logs (Latest 50)</h2>
+      ${logFiltersHtml}
       ${logRows}
     </div>
   `;
