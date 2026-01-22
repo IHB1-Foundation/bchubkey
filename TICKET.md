@@ -422,7 +422,7 @@
     - [ ] Sorting and pagination produce deterministic results
 
 ### T-083: Audit logs viewer improvements (expand, filter, copy)
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Turn audit logs into a demo-friendly “trust” surface.
 - Tasks:
