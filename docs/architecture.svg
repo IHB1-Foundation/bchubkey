@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#2a2a4e"/>
+    </linearGradient>
+    <linearGradient id="telegramGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#229ed9"/>
+      <stop offset="100%" style="stop-color:#1d8abd"/>
+    </linearGradient>
+    <linearGradient id="bchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ac18e"/>
+      <stop offset="100%" style="stop-color:#089f75"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="400" y="35" text-anchor="middle" font-size="20" font-weight="600" fill="#1a1a2e">BCHubKey Architecture</text>
+  <text x="400" y="55" text-anchor="middle" font-size="12" fill="#666">CashTokens-Gated Telegram Group Automation</text>
+
+  <!-- User/Admin Box -->
+  <g transform="translate(50, 90)">
+    <rect width="120" height="100" rx="8" fill="#fff" stroke="#ddd" stroke-width="1" filter="url(#shadow)"/>
+    <text x="60" y="25" text-anchor="middle" font-size="11" font-weight="600" fill="#333">Users / Admins</text>
+    <g transform="translate(25, 40)">
+      <circle cx="20" cy="15" r="12" fill="#e8e8e8"/>
+      <circle cx="50" cy="15" r="12" fill="#e8e8e8"/>
+      <circle cx="20" cy="15" r="6" fill="#888"/>
+      <circle cx="50" cy="15" r="6" fill="#888"/>
+    </g>
+    <text x="60" y="85" text-anchor="middle" font-size="9" fill="#666">Telegram App</text>
+  </g>
+
+  <!-- Telegram Cloud -->
+  <g transform="translate(230, 90)">
+    <rect width="140" height="100" rx="8" fill="url(#telegramGrad)" filter="url(#shadow)"/>
+    <text x="70" y="30" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Telegram</text>
+    <text x="70" y="48" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.8)">Bot API</text>
+    <g transform="translate(45, 55)">
+      <rect width="50" height="20" rx="3" fill="rgba(255,255,255,0.2)"/>
+      <text x="25" y="14" text-anchor="middle" font-size="8" fill="#fff">Webhooks</text>
+    </g>
+    <g transform="translate(45, 75)">
+      <text x="25" y="10" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.7)">Groups + DMs</text>
+    </g>
+  </g>
+
+  <!-- BCHubKey Bot Server -->
+  <g transform="translate(280, 240)">
+    <rect width="240" height="180" rx="10" fill="url(#headerGrad)" filter="url(#shadow)"/>
+    <text x="120" y="25" text-anchor="middle" font-size="14" font-weight="600" fill="#8be9fd">BCHubKey Bot</text>
+
+    <!-- Internal Modules -->
+    <g transform="translate(15, 40)">
+      <!-- Telegraf -->
+      <rect width="100" height="35" rx="4" fill="rgba(255,255,255,0.1)"/>
+      <text x="50" y="15" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Telegraf</text>
+      <text x="50" y="27" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)">Commands + Callbacks</text>
+    </g>
+    <g transform="translate(125, 40)">
+      <!-- Verify Engine -->
+      <rect width="100" height="35" rx="4" fill="rgba(255,255,255,0.1)"/>
+      <text x="50" y="15" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Verify Engine</text>
+      <text x="50" y="27" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)">Micro-tx Proof</text>
+    </g>
+    <g transform="translate(15, 85)">
+      <!-- Gate Logic -->
+      <rect width="100" height="35" rx="4" fill="rgba(255,255,255,0.1)"/>
+      <text x="50" y="15" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Gate Logic</text>
+      <text x="50" y="27" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)">FT/NFT Check</text>
+    </g>
+    <g transform="translate(125, 85)">
+      <!-- Scheduler -->
+      <rect width="100" height="35" rx="4" fill="rgba(255,255,255,0.1)"/>
+      <text x="50" y="15" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Jobs</text>
+      <text x="50" y="27" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)">Recheck + Grace</text>
+    </g>
+    <g transform="translate(15, 135)">
+      <!-- Prisma/SQLite -->
+      <rect width="210" height="30" rx="4" fill="rgba(139,233,253,0.15)"/>
+      <text x="105" y="18" text-anchor="middle" font-size="9" font-weight="500" fill="#8be9fd">Prisma + SQLite</text>
+    </g>
+  </g>
+
+  <!-- BCH Blockchain -->
+  <g transform="translate(580, 90)">
+    <rect width="160" height="100" rx="8" fill="url(#bchGrad)" filter="url(#shadow)"/>
+    <text x="80" y="30" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Bitcoin Cash</text>
+    <text x="80" y="48" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.8)">Blockchain</text>
+    <g transform="translate(30, 55)">
+      <rect width="100" height="35" rx="4" fill="rgba(255,255,255,0.2)"/>
+      <text x="50" y="14" text-anchor="middle" font-size="8" fill="#fff">CashTokens</text>
+      <text x="50" y="26" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.7)">FT + NFT UTXOs</text>
+    </g>
+  </g>
+
+  <!-- Fulcrum Server -->
+  <g transform="translate(580, 240)">
+    <rect width="160" height="80" rx="8" fill="#fff" stroke="#0ac18e" stroke-width="2" filter="url(#shadow)"/>
+    <text x="80" y="28" text-anchor="middle" font-size="11" font-weight="600" fill="#0ac18e">Fulcrum</text>
+    <text x="80" y="45" text-anchor="middle" font-size="9" fill="#666">Electrum Protocol</text>
+    <text x="80" y="62" text-anchor="middle" font-size="8" fill="#888">WSS/TCP</text>
+  </g>
+
+  <!-- BCMR API -->
+  <g transform="translate(580, 340)">
+    <rect width="160" height="60" rx="8" fill="#fff" stroke="#ddd" stroke-width="1" filter="url(#shadow)"/>
+    <text x="80" y="25" text-anchor="middle" font-size="10" font-weight="500" fill="#666">BCMR API</text>
+    <text x="80" y="42" text-anchor="middle" font-size="8" fill="#888">Token Metadata</text>
+  </g>
+
+  <!-- Admin Dashboard (optional) -->
+  <g transform="translate(50, 340)">
+    <rect width="140" height="60" rx="8" fill="#fff" stroke="#8be9fd" stroke-width="2" stroke-dasharray="5,3" filter="url(#shadow)"/>
+    <text x="70" y="25" text-anchor="middle" font-size="10" font-weight="500" fill="#1a1a2e">Admin Dashboard</text>
+    <text x="70" y="42" text-anchor="middle" font-size="8" fill="#888">(Optional) Port 3000</text>
+  </g>
+
+  <!-- Arrows -->
+  <!-- User to Telegram -->
+  <path d="M170 140 L225 140" stroke="#888" stroke-width="2" marker-end="url(#arrowGray)"/>
+  <!-- Telegram to Bot -->
+  <path d="M300 195 L300 235" stroke="#229ed9" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <!-- Bot to Telegram (response) -->
+  <path d="M330 235 L330 195" stroke="#229ed9" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <!-- Bot to Fulcrum -->
+  <path d="M525 300 L575 280" stroke="#0ac18e" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <!-- Fulcrum to Blockchain -->
+  <path d="M660 235 L660 195" stroke="#0ac18e" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <!-- Bot to BCMR -->
+  <path d="M525 360 L575 360" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowGray)"/>
+  <!-- Bot to Dashboard -->
+  <path d="M280 370 L195 370" stroke="#8be9fd" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowCyan)"/>
+
+  <!-- Arrow Markers -->
+  <defs>
+    <marker id="arrowGray" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#888"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#229ed9"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#0ac18e"/>
+    </marker>
+    <marker id="arrowCyan" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8be9fd"/>
+    </marker>
+  </defs>
+
+  <!-- Legend -->
+  <g transform="translate(50, 440)">
+    <text x="0" y="12" font-size="9" font-weight="600" fill="#333">Legend:</text>
+    <rect x="60" y="2" width="12" height="12" rx="2" fill="url(#telegramGrad)"/>
+    <text x="78" y="12" font-size="8" fill="#666">Telegram</text>
+    <rect x="140" y="2" width="12" height="12" rx="2" fill="url(#headerGrad)"/>
+    <text x="158" y="12" font-size="8" fill="#666">BCHubKey</text>
+    <rect x="220" y="2" width="12" height="12" rx="2" fill="url(#bchGrad)"/>
+    <text x="238" y="12" font-size="8" fill="#666">BCH Chain</text>
+    <line x1="310" y1="8" x2="340" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="348" y="12" font-size="8" fill="#666">Optional</text>
+  </g>
+
+  <!-- Flow labels -->
+  <g font-size="7" fill="#666">
+    <text x="190" y="132">Chat</text>
+    <text x="345" y="220">Commands</text>
+    <text x="265" y="220">Updates</text>
+    <text x="535" y="270">Query</text>
+    <text x="672" y="220">Index</text>
+    <text x="535" y="352">Metadata</text>
+    <text x="225" y="362">HTTP</text>
+  </g>
+</svg>

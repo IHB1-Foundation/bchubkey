@@ -473,13 +473,13 @@
     - [x] Demo reset actions require explicit confirmation (or obvious opt-in)
 
 ### T-092: Submission assets (screenshots + diagram + README polish)
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Make the repo look like a complete hackathon submission.
 - Tasks:
     - Add a simple architecture diagram (SVG/PNG) and embed in README
     - Capture/update key screenshots (Telegram flow + dashboard) and add to `docs/submission/`
-    - Update README “Demo & Submission” section to include assets and quick links
+    - Update README "Demo & Submission" section to include assets and quick links
 - Acceptance Criteria:
-    - [ ] README includes an architecture visual and 2–3 product screenshots
-    - [ ] `docs/submission/` contains a minimal, complete asset pack for judges
+    - [x] README includes an architecture visual and 2–3 product screenshots
+    - [x] `docs/submission/` contains a minimal, complete asset pack for judges
