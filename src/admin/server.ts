@@ -14,6 +14,7 @@ import {
   type GateRuleDetail,
   type MemberDetail,
   type AuditLogEntry,
+  type GroupStats,
 } from './templates.js';
 
 const logger = createChildLogger('admin-dashboard');
@@ -50,6 +51,7 @@ async function getGroupDetail(groupId: string): Promise<{
   rule: GateRuleDetail | null;
   members: MemberDetail[];
   logs: AuditLogEntry[];
+  stats: GroupStats;
 } | null> {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
@@ -78,6 +80,16 @@ async function getGroupDetail(groupId: string): Promise<{
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
+
+  // Compute stats
+  const lastRecheckAt = memberships.reduce<Date | null>((latest, m) => {
+    if (!m.lastCheckedAt) return latest;
+    if (!latest) return m.lastCheckedAt;
+    return m.lastCheckedAt > latest ? m.lastCheckedAt : latest;
+  }, null);
+
+  const enforcementTypes = ['RESTRICT', 'UNRESTRICT', 'KICK'];
+  const lastEnforcementLog = logs.find((l) => enforcementTypes.includes(l.type));
 
   return {
     group: {
@@ -120,6 +132,11 @@ async function getGroupDetail(groupId: string): Promise<{
       payloadJson: l.payloadJson,
       createdAt: l.createdAt,
     })),
+    stats: {
+      lastRecheckAt,
+      lastEnforcementAt: lastEnforcementLog?.createdAt ?? null,
+      lastEnforcementType: lastEnforcementLog?.type ?? null,
+    },
   };
 }
 
@@ -149,7 +166,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
         return;
       }
       res.statusCode = 200;
-      res.end(groupDetailPage(data.group, data.rule, data.members, data.logs));
+      res.end(groupDetailPage(data.group, data.rule, data.members, data.logs, data.stats));
       return;
     }
 

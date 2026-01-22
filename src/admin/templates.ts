@@ -328,6 +328,167 @@ const STYLES = `
     margin-top: var(--spacing-xs);
   }
 
+  .stat-box.stat-wide {
+    min-width: 180px;
+    max-width: 280px;
+  }
+
+  .stat-box .sub-value {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+  }
+
+  /* Overview row (stats + chart side by side) */
+  .overview-row {
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .overview-stats {
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .overview-chart {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Donut chart */
+  .donut-chart-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .donut-chart {
+    width: 140px;
+    height: 140px;
+  }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  .legend-color.pass { background: var(--color-pass-text); }
+  .legend-color.fail { background: var(--color-fail-text); }
+  .legend-color.pending { background: var(--color-pending-text); }
+
+  .legend-value {
+    font-weight: 600;
+    margin-left: auto;
+    padding-left: var(--spacing-md);
+  }
+
+  /* Recent events panel */
+  .recent-events {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 900px) {
+    .recent-events {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .event-card {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-card);
+  }
+
+  .event-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+  }
+
+  .event-item:last-child {
+    border-bottom: none;
+  }
+
+  .event-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+
+  .event-icon.pass {
+    background: var(--color-pass-bg);
+    color: var(--color-pass-text);
+  }
+
+  .event-icon.fail {
+    background: var(--color-fail-bg);
+    color: var(--color-fail-text);
+  }
+
+  .event-icon.action {
+    background: var(--color-pending-bg);
+    color: var(--color-pending-text);
+  }
+
+  .event-icon.verify {
+    background: var(--color-paused-bg);
+    color: var(--color-paused-text);
+  }
+
+  .event-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-title {
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  .event-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+  }
+
   /* Buttons */
   a.btn {
     display: inline-block;
@@ -738,17 +899,188 @@ export interface AuditLogEntry {
   createdAt: Date;
 }
 
+export interface GroupStats {
+  lastRecheckAt: Date | null;
+  lastEnforcementAt: Date | null;
+  lastEnforcementType: string | null;
+}
+
+// Helper: Generate SVG donut chart
+function generateDonutChart(
+  pass: number,
+  fail: number,
+  pending: number
+): string {
+  const total = pass + fail + pending;
+  if (total === 0) {
+    return `
+      <div class="donut-chart-container">
+        <svg class="donut-chart" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="var(--color-border)" stroke-width="4" />
+          <text x="21" y="24" text-anchor="middle" font-size="6" fill="var(--color-text-muted)">No data</text>
+        </svg>
+      </div>
+    `;
+  }
+
+  const passPercent = (pass / total) * 100;
+  const failPercent = (fail / total) * 100;
+  const pendingPercent = (pending / total) * 100;
+
+  // Calculate stroke-dasharray and stroke-dashoffset for each segment
+  const circumference = 100;
+  const passOffset = 25; // Start at 12 o'clock
+  const failOffset = passOffset - passPercent;
+  const pendingOffset = failOffset - failPercent;
+
+  return `
+    <div class="donut-chart-container">
+      <svg class="donut-chart" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="var(--color-border)" stroke-width="4" />
+        ${pass > 0 ? `<circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="var(--color-pass-text)" stroke-width="4" stroke-dasharray="${passPercent} ${circumference - passPercent}" stroke-dashoffset="${passOffset}" />` : ''}
+        ${fail > 0 ? `<circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="var(--color-fail-text)" stroke-width="4" stroke-dasharray="${failPercent} ${circumference - failPercent}" stroke-dashoffset="${failOffset}" />` : ''}
+        ${pending > 0 ? `<circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="var(--color-pending-text)" stroke-width="4" stroke-dasharray="${pendingPercent} ${circumference - pendingPercent}" stroke-dashoffset="${pendingOffset}" />` : ''}
+        <text x="21" y="23" text-anchor="middle" font-size="8" font-weight="600" fill="var(--color-text-primary)">${total}</text>
+        <text x="21" y="28" text-anchor="middle" font-size="3" fill="var(--color-text-muted)">TOTAL</text>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-item">
+          <span class="legend-color pass"></span>
+          <span>PASS</span>
+          <span class="legend-value">${pass}</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color fail"></span>
+          <span>FAIL</span>
+          <span class="legend-value">${fail}</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color pending"></span>
+          <span>PENDING</span>
+          <span class="legend-value">${pending}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Helper: Format relative time
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return 'Never';
+  const now = new Date();
+  const diff = now.getTime() - new Date(date).getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return formatDate(date);
+}
+
+// Helper: Generate event icon and class based on log type
+function getEventStyle(type: string): { icon: string; cssClass: string } {
+  const typeMap: Record<string, { icon: string; cssClass: string }> = {
+    GATE_PASS: { icon: '&#10003;', cssClass: 'pass' },
+    GATE_FAIL: { icon: '&#10007;', cssClass: 'fail' },
+    VERIFY_SUCCESS: { icon: '&#10003;', cssClass: 'pass' },
+    VERIFY_FAIL: { icon: '&#10007;', cssClass: 'fail' },
+    RESTRICT: { icon: '&#9888;', cssClass: 'action' },
+    UNRESTRICT: { icon: '&#10003;', cssClass: 'pass' },
+    KICK: { icon: '&#10007;', cssClass: 'fail' },
+    SETUP: { icon: '&#9881;', cssClass: 'verify' },
+    RECHECK: { icon: '&#8635;', cssClass: 'verify' },
+    ERROR: { icon: '&#9888;', cssClass: 'fail' },
+  };
+  return typeMap[type] || { icon: '&#8226;', cssClass: 'verify' };
+}
+
+// Helper: Generate human-readable event description
+function getEventDescription(log: AuditLogEntry): string {
+  const descriptions: Record<string, string> = {
+    GATE_PASS: 'User passed gate check',
+    GATE_FAIL: 'User failed gate check',
+    VERIFY_SUCCESS: 'Ownership verified',
+    VERIFY_FAIL: 'Verification failed',
+    RESTRICT: 'User restricted',
+    UNRESTRICT: 'User unrestricted',
+    KICK: 'User removed',
+    SETUP: 'Group configured',
+    RECHECK: 'Recheck completed',
+    ERROR: 'Error occurred',
+  };
+  return descriptions[log.type] || log.type;
+}
+
+// Helper: Generate recent events panel
+function generateRecentEvents(logs: AuditLogEntry[]): string {
+  // Categorize logs
+  const enforcementTypes = ['RESTRICT', 'UNRESTRICT', 'KICK'];
+  const gateTypes = ['GATE_PASS', 'GATE_FAIL', 'VERIFY_SUCCESS', 'VERIFY_FAIL'];
+
+  const enforcementLogs = logs.filter((l) => enforcementTypes.includes(l.type)).slice(0, 5);
+  const gateLogs = logs.filter((l) => gateTypes.includes(l.type)).slice(0, 5);
+
+  const renderEvent = (log: AuditLogEntry): string => {
+    const style = getEventStyle(log.type);
+    const desc = getEventDescription(log);
+    const userId = log.tgUserId ? `User ${log.tgUserId}` : 'System';
+    return `
+      <div class="event-item">
+        <span class="event-icon ${style.cssClass}">${style.icon}</span>
+        <div class="event-content">
+          <div class="event-title">${escapeHtml(desc)}</div>
+          <div class="event-meta">${escapeHtml(userId)} &middot; ${formatRelativeTime(log.createdAt)}</div>
+        </div>
+      </div>
+    `;
+  };
+
+  const enforcementHtml =
+    enforcementLogs.length === 0
+      ? '<div class="empty" style="padding: var(--spacing-sm)">No enforcement actions</div>'
+      : enforcementLogs.map(renderEvent).join('');
+
+  const gateHtml =
+    gateLogs.length === 0
+      ? '<div class="empty" style="padding: var(--spacing-sm)">No gate events</div>'
+      : gateLogs.map(renderEvent).join('');
+
+  return `
+    <div class="recent-events">
+      <div class="event-card">
+        <h3>Recent Enforcements</h3>
+        ${enforcementHtml}
+      </div>
+      <div class="event-card">
+        <h3>Recent Gate Checks</h3>
+        ${gateHtml}
+      </div>
+    </div>
+  `;
+}
+
 export function groupDetailPage(
   group: GroupDetail,
   rule: GateRuleDetail | null,
   members: MemberDetail[],
-  logs: AuditLogEntry[]
+  logs: AuditLogEntry[],
+  stats?: GroupStats
 ): string {
   const passCount = members.filter((m) => m.state === 'VERIFIED_PASS').length;
   const failCount = members.filter((m) => m.state === 'VERIFIED_FAIL').length;
   const pendingCount = members.filter(
     (m) => m.state === 'PENDING_VERIFY' || m.state === 'UNKNOWN'
   ).length;
+
+  // Generate the donut chart
+  const donutChart = generateDonutChart(passCount, failCount, pendingCount);
+
+  // Generate recent events panel
+  const recentEvents = generateRecentEvents(logs);
 
   const memberRows =
     members.length === 0
@@ -832,24 +1164,46 @@ export function groupDetailPage(
     : '<div class="empty">No gate rule configured</div>';
 
   const content = `
-    <div class="stats">
-      <div class="stat-box">
-        <div class="value">${members.length}</div>
-        <div class="label">Total Members</div>
+    <div class="overview-row">
+      <div class="overview-stats">
+        <div class="stats" style="margin-bottom: 0">
+          <div class="stat-box">
+            <div class="value">${members.length}</div>
+            <div class="label">Total Members</div>
+          </div>
+          <div class="stat-box">
+            <div class="value" style="color:var(--color-pass-text)">${passCount}</div>
+            <div class="label">PASS</div>
+          </div>
+          <div class="stat-box">
+            <div class="value" style="color:var(--color-fail-text)">${failCount}</div>
+            <div class="label">FAIL</div>
+          </div>
+          <div class="stat-box">
+            <div class="value" style="color:var(--color-pending-text)">${pendingCount}</div>
+            <div class="label">PENDING</div>
+          </div>
+        </div>
+        <div class="stats" style="margin-top: var(--spacing-md)">
+          <div class="stat-box stat-wide">
+            <div class="label">Last Recheck</div>
+            <div class="sub-value">${stats?.lastRecheckAt ? formatRelativeTime(stats.lastRecheckAt) : 'Never'}</div>
+          </div>
+          <div class="stat-box stat-wide">
+            <div class="label">Last Enforcement</div>
+            <div class="sub-value">${stats?.lastEnforcementAt ? `${stats.lastEnforcementType || 'Action'} ${formatRelativeTime(stats.lastEnforcementAt)}` : 'None'}</div>
+          </div>
+        </div>
       </div>
-      <div class="stat-box">
-        <div class="value" style="color:var(--color-pass-text)">${passCount}</div>
-        <div class="label">PASS</div>
-      </div>
-      <div class="stat-box">
-        <div class="value" style="color:var(--color-fail-text)">${failCount}</div>
-        <div class="label">FAIL</div>
-      </div>
-      <div class="stat-box">
-        <div class="value" style="color:var(--color-pending-text)">${pendingCount}</div>
-        <div class="label">PENDING</div>
+      <div class="overview-chart">
+        <div class="card" style="margin-bottom: 0">
+          <h2>Member Distribution</h2>
+          ${donutChart}
+        </div>
       </div>
     </div>
+
+    ${recentEvents}
 
     <div class="card">
       <h2>Group Info</h2>
