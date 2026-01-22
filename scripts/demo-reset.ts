@@ -8,7 +8,8 @@
  * WARNING: This will delete all existing data!
  */
 
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import { prisma, disconnectPrisma } from '../src/db/client.js';
 import { createInterface } from 'node:readline';
 
 // ANSI color codes
@@ -19,8 +20,6 @@ const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
 const DIM = '\x1b[2m';
-
-const prisma = new PrismaClient();
 
 async function confirm(message: string): Promise<boolean> {
   const rl = createInterface({
@@ -156,7 +155,7 @@ ${DIM}${'='.repeat(40)}${RESET}
     console.error(`\n${RED}Error:${RESET}`, error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await disconnectPrisma();
   }
 }
 
