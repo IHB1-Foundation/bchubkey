@@ -385,7 +385,7 @@
 
 ## Milestone M8 — Admin Dashboard “Fancy” UX (Demo-Ready)
 ### T-080: Dashboard theme refresh + dark mode toggle
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Make the admin dashboard look modern and “product-grade” for screenshots/video.
 - Tasks:
