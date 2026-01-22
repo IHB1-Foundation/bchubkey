@@ -434,7 +434,7 @@
     - [ ] Payload expansion works and remains readable
 
 ### T-084: Live-ish updates + health indicators
-- Status: TODO
+- Status: DONE
 - Priority: P2
 - Goal: Give the dashboard a “live system” feel (helpful for demo confidence).
 - Tasks:
