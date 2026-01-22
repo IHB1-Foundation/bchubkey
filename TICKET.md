@@ -449,7 +449,7 @@
 
 ## Milestone M9 — Demo & Submission Polish (Showtime)
 ### T-090: One-command demo runner (`npm run demo`)
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Reduce demo risk by making setup deterministic and fast.
 - Tasks:
