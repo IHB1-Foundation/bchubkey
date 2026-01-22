@@ -489,6 +489,132 @@ const STYLES = `
     margin-top: 2px;
   }
 
+  /* Table filters and controls */
+  .table-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    align-items: center;
+  }
+
+  .table-controls .search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast);
+  }
+
+  .table-controls .search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .table-controls .search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .table-controls select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+  }
+
+  .table-controls select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .table-controls label {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: var(--spacing-xs);
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .pagination-info {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+  }
+
+  .pagination-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .pagination-buttons a,
+  .pagination-buttons span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    min-width: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .pagination-buttons a {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+
+  .pagination-buttons a:hover {
+    border-color: var(--color-accent);
+    background: var(--color-bg-table-hover);
+  }
+
+  .pagination-buttons span.current {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    border-color: var(--color-primary);
+  }
+
+  [data-theme="dark"] .pagination-buttons span.current {
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-color: var(--color-accent);
+  }
+
+  .pagination-buttons span.disabled {
+    background: var(--color-bg-table-header);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+
   /* Buttons */
   a.btn {
     display: inline-block;
@@ -905,6 +1031,123 @@ export interface GroupStats {
   lastEnforcementType: string | null;
 }
 
+export interface MemberFilters {
+  search: string;
+  state: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  page: number;
+  limit: number;
+  totalCount: number;
+}
+
+// Helper: Build query string preserving current filters
+function buildQueryString(
+  groupId: string,
+  filters: MemberFilters,
+  overrides: Partial<MemberFilters>
+): string {
+  const params = new URLSearchParams();
+  const merged = { ...filters, ...overrides };
+
+  if (merged.search) params.set('search', merged.search);
+  if (merged.state && merged.state !== 'all') params.set('state', merged.state);
+  if (merged.sortBy && merged.sortBy !== 'lastCheckedAt') params.set('sortBy', merged.sortBy);
+  if (merged.sortOrder && merged.sortOrder !== 'desc') params.set('sortOrder', merged.sortOrder);
+  if (merged.page && merged.page !== 1) params.set('page', String(merged.page));
+  if (merged.limit && merged.limit !== 20) params.set('limit', String(merged.limit));
+
+  const qs = params.toString();
+  return `/groups/${groupId}${qs ? '?' + qs : ''}`;
+}
+
+// Helper: Generate table controls (search, filter, sort)
+function generateTableControls(groupId: string, filters: MemberFilters): string {
+  const stateOptions = [
+    { value: 'all', label: 'All States' },
+    { value: 'VERIFIED_PASS', label: 'PASS' },
+    { value: 'VERIFIED_FAIL', label: 'FAIL' },
+    { value: 'PENDING_VERIFY', label: 'PENDING' },
+  ];
+
+  const sortOptions = [
+    { value: 'lastCheckedAt', label: 'Last Check' },
+    { value: 'state', label: 'State' },
+    { value: 'tgUserId', label: 'User ID' },
+  ];
+
+  const stateSelect = stateOptions
+    .map(
+      (o) =>
+        `<option value="${o.value}" ${filters.state === o.value ? 'selected' : ''}>${o.label}</option>`
+    )
+    .join('');
+
+  const sortSelect = sortOptions
+    .map(
+      (o) =>
+        `<option value="${o.value}" ${filters.sortBy === o.value ? 'selected' : ''}>${o.label}</option>`
+    )
+    .join('');
+
+  const orderSelect = `
+    <option value="desc" ${filters.sortOrder === 'desc' ? 'selected' : ''}>Newest</option>
+    <option value="asc" ${filters.sortOrder === 'asc' ? 'selected' : ''}>Oldest</option>
+  `;
+
+  return `
+    <form class="table-controls" method="get" action="/groups/${escapeHtml(groupId)}">
+      <input
+        type="text"
+        name="search"
+        class="search-input"
+        placeholder="Search by user ID or username..."
+        value="${escapeHtml(filters.search)}"
+      />
+      <div class="filter-group">
+        <label for="state">State:</label>
+        <select name="state" id="state" onchange="this.form.submit()">
+          ${stateSelect}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="sortBy">Sort:</label>
+        <select name="sortBy" id="sortBy" onchange="this.form.submit()">
+          ${sortSelect}
+        </select>
+        <select name="sortOrder" id="sortOrder" onchange="this.form.submit()">
+          ${orderSelect}
+        </select>
+      </div>
+      <noscript><button type="submit" class="btn">Apply</button></noscript>
+    </form>
+  `;
+}
+
+// Helper: Generate pagination controls
+function generatePagination(groupId: string, filters: MemberFilters): string {
+  const { page, limit, totalCount } = filters;
+  const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+  const start = Math.min((page - 1) * limit + 1, totalCount);
+  const end = Math.min(page * limit, totalCount);
+
+  const prevUrl = page > 1 ? buildQueryString(groupId, filters, { page: page - 1 }) : null;
+  const nextUrl = page < totalPages ? buildQueryString(groupId, filters, { page: page + 1 }) : null;
+
+  return `
+    <div class="pagination">
+      <div class="pagination-info">
+        Showing ${start}–${end} of ${totalCount} members
+      </div>
+      <div class="pagination-buttons">
+        ${prevUrl ? `<a href="${prevUrl}">&laquo; Prev</a>` : '<span class="disabled">&laquo; Prev</span>'}
+        <span class="current">${page}</span>
+        ${nextUrl ? `<a href="${nextUrl}">Next &raquo;</a>` : '<span class="disabled">Next &raquo;</span>'}
+      </div>
+    </div>
+  `;
+}
+
 // Helper: Generate SVG donut chart
 function generateDonutChart(
   pass: number,
@@ -1068,8 +1311,20 @@ export function groupDetailPage(
   rule: GateRuleDetail | null,
   members: MemberDetail[],
   logs: AuditLogEntry[],
-  stats?: GroupStats
+  stats?: GroupStats,
+  filters?: MemberFilters
 ): string {
+  // Default filters if not provided
+  const activeFilters: MemberFilters = filters || {
+    search: '',
+    state: 'all',
+    sortBy: 'lastCheckedAt',
+    sortOrder: 'desc',
+    page: 1,
+    limit: 20,
+    totalCount: members.length,
+  };
+
   const passCount = members.filter((m) => m.state === 'VERIFIED_PASS').length;
   const failCount = members.filter((m) => m.state === 'VERIFIED_FAIL').length;
   const pendingCount = members.filter(
@@ -1082,9 +1337,13 @@ export function groupDetailPage(
   // Generate recent events panel
   const recentEvents = generateRecentEvents(logs);
 
+  // Generate table controls and pagination
+  const tableControls = generateTableControls(group.id, activeFilters);
+  const pagination = generatePagination(group.id, activeFilters);
+
   const memberRows =
     members.length === 0
-      ? '<tr><td colspan="6" class="empty">No members</td></tr>'
+      ? '<tr><td colspan="6" class="empty">No members matching filters</td></tr>'
       : members
           .map(
             (m) => `
@@ -1241,7 +1500,8 @@ export function groupDetailPage(
     </div>
 
     <div class="card">
-      <h2>Members (${members.length})</h2>
+      <h2>Members (${activeFilters.totalCount})</h2>
+      ${tableControls}
       <table>
         <thead>
           <tr>
@@ -1257,6 +1517,7 @@ export function groupDetailPage(
           ${memberRows}
         </tbody>
       </table>
+      ${pagination}
     </div>
 
     <div class="card">

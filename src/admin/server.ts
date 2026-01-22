@@ -15,6 +15,7 @@ import {
   type MemberDetail,
   type AuditLogEntry,
   type GroupStats,
+  type MemberFilters,
 } from './templates.js';
 
 const logger = createChildLogger('admin-dashboard');
@@ -46,12 +47,25 @@ async function getGroupsList(): Promise<GroupSummary[]> {
   }));
 }
 
-async function getGroupDetail(groupId: string): Promise<{
+interface MemberQueryParams {
+  search?: string;
+  state?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+async function getGroupDetail(
+  groupId: string,
+  queryParams: MemberQueryParams = {}
+): Promise<{
   group: GroupDetail;
   rule: GateRuleDetail | null;
   members: MemberDetail[];
   logs: AuditLogEntry[];
   stats: GroupStats;
+  filters: MemberFilters;
 } | null> {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
@@ -64,14 +78,64 @@ async function getGroupDetail(groupId: string): Promise<{
     orderBy: { createdAt: 'desc' },
   });
 
+  // Parse and validate query params
+  const search = queryParams.search?.trim() || '';
+  const state = queryParams.state || 'all';
+  const sortBy = queryParams.sortBy || 'lastCheckedAt';
+  const sortOrder = queryParams.sortOrder || 'desc';
+  const page = Math.max(1, queryParams.page || 1);
+  const limit = Math.min(100, Math.max(1, queryParams.limit || 20));
+  const skip = (page - 1) * limit;
+
+  // Build where clause for memberships
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const whereClause: any = { groupId };
+
+  // State filter
+  if (state && state !== 'all') {
+    whereClause.state = state;
+  }
+
+  // Search filter (user ID or username)
+  if (search) {
+    whereClause.OR = [
+      { tgUserId: { contains: search } },
+      { user: { username: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
+  // Build orderBy clause
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let orderBy: any = { lastCheckedAt: sortOrder };
+  if (sortBy === 'state') {
+    orderBy = { state: sortOrder };
+  } else if (sortBy === 'tgUserId') {
+    orderBy = { tgUserId: sortOrder };
+  }
+
+  // Get total count for pagination
+  const totalCount = await prisma.membership.count({
+    where: whereClause,
+  });
+
+  // Fetch memberships with filters
   const memberships = await prisma.membership.findMany({
-    where: { groupId },
+    where: whereClause,
     include: {
       user: {
         select: { username: true, firstName: true },
       },
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy,
+    skip,
+    take: limit,
+  });
+
+  // Fetch all memberships for stats (unfiltered, but limited)
+  const allMemberships = await prisma.membership.findMany({
+    where: { groupId },
+    select: { lastCheckedAt: true },
+    orderBy: { lastCheckedAt: 'desc' },
     take: 100,
   });
 
@@ -81,8 +145,8 @@ async function getGroupDetail(groupId: string): Promise<{
     take: 50,
   });
 
-  // Compute stats
-  const lastRecheckAt = memberships.reduce<Date | null>((latest, m) => {
+  // Compute stats from all memberships (not filtered)
+  const lastRecheckAt = allMemberships.reduce<Date | null>((latest, m) => {
     if (!m.lastCheckedAt) return latest;
     if (!latest) return m.lastCheckedAt;
     return m.lastCheckedAt > latest ? m.lastCheckedAt : latest;
@@ -137,6 +201,15 @@ async function getGroupDetail(groupId: string): Promise<{
       lastEnforcementAt: lastEnforcementLog?.createdAt ?? null,
       lastEnforcementType: lastEnforcementLog?.type ?? null,
     },
+    filters: {
+      search,
+      state,
+      sortBy,
+      sortOrder,
+      page,
+      limit,
+      totalCount,
+    },
   };
 }
 
@@ -159,14 +232,27 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
     const groupMatch = pathname.match(/^\/groups\/(-?\d+)$/);
     if (groupMatch && req.method === 'GET') {
       const groupId = groupMatch[1];
-      const data = await getGroupDetail(groupId);
+
+      // Parse query params for member filtering
+      const pageParam = url.searchParams.get('page');
+      const limitParam = url.searchParams.get('limit');
+      const queryParams: MemberQueryParams = {
+        search: url.searchParams.get('search') || undefined,
+        state: url.searchParams.get('state') || undefined,
+        sortBy: url.searchParams.get('sortBy') || undefined,
+        sortOrder: (url.searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
+        page: pageParam ? parseInt(pageParam, 10) : undefined,
+        limit: limitParam ? parseInt(limitParam, 10) : undefined,
+      };
+
+      const data = await getGroupDetail(groupId, queryParams);
       if (!data) {
         res.statusCode = 404;
         res.end(notFoundPage());
         return;
       }
       res.statusCode = 200;
-      res.end(groupDetailPage(data.group, data.rule, data.members, data.logs, data.stats));
+      res.end(groupDetailPage(data.group, data.rule, data.members, data.logs, data.stats, data.filters));
       return;
     }
 
