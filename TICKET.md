@@ -409,7 +409,7 @@
     - [ ] Recent events panel is readable and useful in demo
 
 ### T-082: Members table search/filter/sort (demo-scale, server-side)
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Make the dashboard feel usable: find users fast, filter by state, and sort.
 - Tasks:
