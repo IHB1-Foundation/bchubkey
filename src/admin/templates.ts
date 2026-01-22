@@ -1,5 +1,12 @@
 // HTML templates for admin dashboard (read-only)
 
+/**
+ * Check if the application is running in demo mode.
+ */
+export function isDemoMode(): boolean {
+  return process.env.DEMO_MODE === 'true';
+}
+
 const STYLES = `
   /* CSS Custom Properties - Light Theme (default) */
   :root {
@@ -904,6 +911,35 @@ const STYLES = `
     text-align: center;
   }
 
+  /* Demo Mode Banner */
+  .demo-banner {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+    color: #1a1a2e;
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+  }
+
+  .demo-banner-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+
+  .demo-banner-icon {
+    font-size: 1rem;
+  }
+
+  [data-theme="dark"] .demo-banner {
+    background: linear-gradient(90deg, #d97706, #b45309);
+    color: #ffffff;
+  }
+
   /* Detail grid */
   .detail-grid {
     display: grid;
@@ -1254,20 +1290,33 @@ const REFRESH_SCRIPT = `
 `;
 
 function layout(title: string, content: string, breadcrumb?: string): string {
+  const demoMode = isDemoMode();
+  const demoBanner = demoMode
+    ? `<div class="demo-banner">
+        <div class="demo-banner-inner">
+          <span class="demo-banner-icon">&#9888;</span>
+          <span>DEMO MODE</span>
+          <span>&#8212;</span>
+          <span>Fast intervals enabled for live demonstration</span>
+        </div>
+      </div>`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} - BCHubKey Admin</title>
+  <title>${title} - BCHubKey Admin${demoMode ? ' [DEMO]' : ''}</title>
   <style>${STYLES}</style>
 </head>
 <body>
+  ${demoBanner}
   <header>
     <div class="header-content">
       <div class="header-brand">
         ${LOGO_SVG}
-        <h1>BCHubKey</h1>
+        <h1>BCHubKey${demoMode ? ' <span style="color: #f59e0b; font-size: 0.7em; vertical-align: middle;">[DEMO]</span>' : ''}</h1>
       </div>
       <div class="header-right">
         <nav>

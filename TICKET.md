@@ -461,16 +461,16 @@
     - [ ] Optional reset/seed can be executed without manual DB poking
 
 ### T-091: Demo safety rails + visual cues
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Prevent operator mistakes during live judging.
 - Tasks:
-    - Add a “Demo Mode” indicator to logs and (optionally) dashboard header
+    - Add a "Demo Mode" indicator to logs and (optionally) dashboard header
     - Add guardrails for destructive actions (e.g., confirm resets in scripts)
     - Ensure all demo-critical errors log a clear remediation step
 - Acceptance Criteria:
-    - [ ] Demo Mode is clearly visible when enabled
-    - [ ] Demo reset actions require explicit confirmation (or obvious opt-in)
+    - [x] Demo Mode is clearly visible when enabled
+    - [x] Demo reset actions require explicit confirmation (or obvious opt-in)
 
 ### T-092: Submission assets (screenshots + diagram + README polish)
 - Status: TODO

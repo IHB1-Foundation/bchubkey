@@ -7,7 +7,7 @@
 
 import { prisma } from '../db/client.js';
 import { getChainAdapter } from '../chain/index.js';
-import { createChildLogger } from '../util/logger.js';
+import { createChildLogger, logDemoError } from '../util/logger.js';
 import { processGateCheck } from '../gate/index.js';
 import type { VerifySession } from '../generated/prisma/client.js';
 
@@ -39,7 +39,12 @@ export function startVerifyWorker(): void {
 
   // Run immediately, then on interval
   runVerificationCycle().catch((error) => {
-    logger.error({ error }, 'Initial verification cycle failed');
+    logDemoError(
+      logger,
+      error,
+      'Initial verification cycle failed',
+      'Check chain adapter connection. Try: 1) Verify FULCRUM_URL in .env, 2) Restart the app'
+    );
   });
 
   pollingInterval = setInterval(async () => {
@@ -51,7 +56,12 @@ export function startVerifyWorker(): void {
     try {
       await runVerificationCycle();
     } catch (error) {
-      logger.error({ error }, 'Verification cycle failed');
+      logDemoError(
+        logger,
+        error,
+        'Verification cycle failed',
+        'Check chain connection. Try: 1) Verify FULCRUM_URL, 2) Check network connectivity, 3) Restart the app'
+      );
     }
   }, POLL_INTERVAL_MS);
 }
@@ -104,7 +114,12 @@ async function runVerificationCycle(): Promise<void> {
       try {
         await processAddressSessions(verifyAddress, sessions);
       } catch (error) {
-        logger.error({ error, verifyAddress }, 'Failed to process address sessions');
+        logDemoError(
+          logger,
+          error,
+          `Failed to process address sessions for ${verifyAddress}`,
+          'Chain adapter may be offline. Try: 1) Check FULCRUM_URL, 2) Verify the address is valid BCH, 3) Restart'
+        );
       }
     }
 

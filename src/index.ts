@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { logger } from './util/logger.js';
+import { logger, isDemoMode } from './util/logger.js';
 import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
 import {
@@ -12,10 +12,19 @@ import { startJobs, stopJobs } from './jobs/index.js';
 import { startDashboard, stopDashboard } from './admin/index.js';
 
 async function main() {
+  // Prominent demo mode indicator at startup
+  if (isDemoMode()) {
+    logger.info('========================================');
+    logger.info('       DEMO MODE ENABLED');
+    logger.info('  Fast intervals for live demonstration');
+    logger.info('========================================');
+  }
+
   logger.info('BCHubKey starting...');
   logger.info({
     nodeVersion: process.version,
     env: process.env.NODE_ENV ?? 'development',
+    demoMode: isDemoMode(),
   });
 
   try {

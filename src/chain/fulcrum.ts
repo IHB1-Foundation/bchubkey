@@ -15,7 +15,7 @@ import {
   hexToBin,
   binToHex,
 } from '@bitauth/libauth';
-import { createChildLogger } from '../util/logger.js';
+import { createChildLogger, logDemoError } from '../util/logger.js';
 import { TTLCache } from './cache.js';
 import type {
   ChainAdapter,
@@ -114,7 +114,12 @@ export class FulcrumAdapter implements ChainAdapter {
       });
 
       this.ws.on('error', (error) => {
-        logger.error({ error: error.message }, 'WebSocket error');
+        logDemoError(
+          logger,
+          error,
+          'WebSocket connection error',
+          'Check Fulcrum server. Try: 1) Verify FULCRUM_URL in .env, 2) Try alternate server: wss://electroncash.de:60002, 3) Check network connection'
+        );
         if (this.connecting) {
           clearTimeout(connectionTimeout);
           this.connecting = false;
@@ -134,7 +139,12 @@ export class FulcrumAdapter implements ChainAdapter {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      logger.error('Max reconnection attempts reached');
+      logDemoError(
+        logger,
+        new Error('Max reconnection attempts reached'),
+        'Chain adapter connection failed permanently',
+        'Fulcrum server unreachable. Try: 1) Restart the app, 2) Change FULCRUM_URL in .env, 3) Check https://status.imaginary.cash/'
+      );
       return;
     }
 
@@ -147,7 +157,12 @@ export class FulcrumAdapter implements ChainAdapter {
       try {
         await this.connect();
       } catch (error) {
-        logger.error({ error }, 'Reconnection failed');
+        logDemoError(
+          logger,
+          error,
+          'Reconnection attempt failed',
+          'Will retry automatically. If persistent, check FULCRUM_URL and network connectivity'
+        );
       }
     }, delay);
   }
