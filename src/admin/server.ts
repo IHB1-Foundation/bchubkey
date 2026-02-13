@@ -1,26 +1,49 @@
-// Admin dashboard HTTP server (read-only)
+// Admin dashboard JSON API server
 
 import http from 'node:http';
 import { URL } from 'node:url';
 import { prisma } from '../db/client.js';
-import { createChildLogger } from '../util/logger.js';
-import {
-  groupsListPage,
-  groupDetailPage,
-  notFoundPage,
-  errorPage,
-  type GroupSummary,
-  type GroupDetail,
-  type GateRuleDetail,
-  type MemberDetail,
-  type AuditLogEntry,
-  type GroupStats,
-  type MemberFilters,
-} from './templates.js';
+import { createChildLogger, isDemoMode } from '../util/logger.js';
+import type {
+  GroupSummary,
+  GroupDetailResponse,
+  HealthResponse,
+} from './types.js';
 
-const logger = createChildLogger('admin-dashboard');
+const logger = createChildLogger('admin-api');
+const startTime = Date.now();
 
 let server: http.Server | null = null;
+
+function getCorsOrigin(): string | null {
+  return process.env.ADMIN_CORS_ORIGIN || null;
+}
+
+function setCorsHeaders(res: http.ServerResponse): void {
+  const origin = getCorsOrigin();
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+}
+
+function jsonResponse(res: http.ServerResponse, status: number, data: unknown): void {
+  setCorsHeaders(res);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.statusCode = status;
+  res.end(JSON.stringify(data));
+}
+
+interface MemberQueryParams {
+  search?: string;
+  state?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
 
 async function getGroupsList(): Promise<GroupSummary[]> {
   const groups = await prisma.group.findMany({
@@ -43,30 +66,14 @@ async function getGroupsList(): Promise<GroupSummary[]> {
     memberCount: g._count.memberships,
     passCount: g.memberships.filter((m) => m.state === 'VERIFIED_PASS').length,
     failCount: g.memberships.filter((m) => m.state === 'VERIFIED_FAIL').length,
-    createdAt: g.createdAt,
+    createdAt: g.createdAt.toISOString(),
   }));
-}
-
-interface MemberQueryParams {
-  search?: string;
-  state?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  page?: number;
-  limit?: number;
 }
 
 async function getGroupDetail(
   groupId: string,
   queryParams: MemberQueryParams = {}
-): Promise<{
-  group: GroupDetail;
-  rule: GateRuleDetail | null;
-  members: MemberDetail[];
-  logs: AuditLogEntry[];
-  stats: GroupStats;
-  filters: MemberFilters;
-} | null> {
+): Promise<GroupDetailResponse | null> {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
   });
@@ -78,7 +85,6 @@ async function getGroupDetail(
     orderBy: { createdAt: 'desc' },
   });
 
-  // Parse and validate query params
   const search = queryParams.search?.trim() || '';
   const state = queryParams.state || 'all';
   const sortBy = queryParams.sortBy || 'lastCheckedAt';
@@ -87,16 +93,13 @@ async function getGroupDetail(
   const limit = Math.min(100, Math.max(1, queryParams.limit || 20));
   const skip = (page - 1) * limit;
 
-  // Build where clause for memberships
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const whereClause: any = { groupId };
 
-  // State filter
   if (state && state !== 'all') {
     whereClause.state = state;
   }
 
-  // Search filter (user ID or username)
   if (search) {
     whereClause.OR = [
       { tgUserId: { contains: search } },
@@ -104,7 +107,6 @@ async function getGroupDetail(
     ];
   }
 
-  // Build orderBy clause
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let orderBy: any = { lastCheckedAt: sortOrder };
   if (sortBy === 'state') {
@@ -113,12 +115,10 @@ async function getGroupDetail(
     orderBy = { tgUserId: sortOrder };
   }
 
-  // Get total count for pagination
   const totalCount = await prisma.membership.count({
     where: whereClause,
   });
 
-  // Fetch memberships with filters
   const memberships = await prisma.membership.findMany({
     where: whereClause,
     include: {
@@ -131,7 +131,6 @@ async function getGroupDetail(
     take: limit,
   });
 
-  // Fetch all memberships for stats (unfiltered, but limited)
   const allMemberships = await prisma.membership.findMany({
     where: { groupId },
     select: { lastCheckedAt: true },
@@ -145,7 +144,6 @@ async function getGroupDetail(
     take: 50,
   });
 
-  // Compute stats from all memberships (not filtered)
   const lastRecheckAt = allMemberships.reduce<Date | null>((latest, m) => {
     if (!m.lastCheckedAt) return latest;
     if (!latest) return m.lastCheckedAt;
@@ -162,8 +160,8 @@ async function getGroupDetail(
       mode: group.mode,
       status: group.status,
       setupCode: group.setupCode,
-      createdAt: group.createdAt,
-      updatedAt: group.updatedAt,
+      createdAt: group.createdAt.toISOString(),
+      updatedAt: group.updatedAt.toISOString(),
     },
     rule: rule
       ? {
@@ -186,7 +184,7 @@ async function getGroupDetail(
       firstName: m.user.firstName,
       state: m.state,
       lastBalanceBase: m.lastBalanceBase,
-      lastCheckedAt: m.lastCheckedAt,
+      lastCheckedAt: m.lastCheckedAt?.toISOString() ?? null,
       enforced: m.enforced,
     })),
     logs: logs.map((l) => ({
@@ -194,11 +192,11 @@ async function getGroupDetail(
       type: l.type,
       tgUserId: l.tgUserId,
       payloadJson: l.payloadJson,
-      createdAt: l.createdAt,
+      createdAt: l.createdAt.toISOString(),
     })),
     stats: {
-      lastRecheckAt,
-      lastEnforcementAt: lastEnforcementLog?.createdAt ?? null,
+      lastRecheckAt: lastRecheckAt?.toISOString() ?? null,
+      lastEnforcementAt: lastEnforcementLog?.createdAt.toISOString() ?? null,
       lastEnforcementType: lastEnforcementLog?.type ?? null,
     },
     filters: {
@@ -217,23 +215,39 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
   const pathname = url.pathname;
 
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
 
   try {
-    // Route: GET /
-    if (pathname === '/' && req.method === 'GET') {
-      const groups = await getGroupsList();
-      res.statusCode = 200;
-      res.end(groupsListPage(groups));
+    // GET /api/health
+    if (pathname === '/api/health' && req.method === 'GET') {
+      const health: HealthResponse = {
+        status: 'ok',
+        uptime: Math.floor((Date.now() - startTime) / 1000),
+        demoMode: isDemoMode(),
+        timestamp: new Date().toISOString(),
+      };
+      jsonResponse(res, 200, health);
       return;
     }
 
-    // Route: GET /groups/:id
-    const groupMatch = pathname.match(/^\/groups\/(-?\d+)$/);
+    // GET /api/groups
+    if (pathname === '/api/groups' && req.method === 'GET') {
+      const groups = await getGroupsList();
+      jsonResponse(res, 200, { groups });
+      return;
+    }
+
+    // GET /api/groups/:id
+    const groupMatch = pathname.match(/^\/api\/groups\/(-?\d+)$/);
     if (groupMatch && req.method === 'GET') {
       const groupId = groupMatch[1];
 
-      // Parse query params for member filtering
       const pageParam = url.searchParams.get('page');
       const limitParam = url.searchParams.get('limit');
       const queryParams: MemberQueryParams = {
@@ -247,48 +261,43 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
 
       const data = await getGroupDetail(groupId, queryParams);
       if (!data) {
-        res.statusCode = 404;
-        res.end(notFoundPage());
+        jsonResponse(res, 404, { error: 'Group not found' });
         return;
       }
-      res.statusCode = 200;
-      res.end(groupDetailPage(data.group, data.rule, data.members, data.logs, data.stats, data.filters));
+      jsonResponse(res, 200, data);
       return;
     }
 
     // 404 for all other routes
-    res.statusCode = 404;
-    res.end(notFoundPage());
+    jsonResponse(res, 404, { error: 'Not found' });
   } catch (error) {
-    logger.error({ error, pathname }, 'Dashboard request error');
-    res.statusCode = 500;
-    res.end(errorPage('Internal server error'));
+    logger.error({ error, pathname }, 'API request error');
+    jsonResponse(res, 500, { error: 'Internal server error' });
   }
 }
 
 export function startDashboard(port: number): Promise<void> {
   return new Promise((resolve, reject) => {
     if (server) {
-      logger.warn('Dashboard already running');
+      logger.warn('API server already running');
       resolve();
       return;
     }
 
     server = http.createServer((req, res) => {
       handleRequest(req, res).catch((err) => {
-        logger.error({ err }, 'Unhandled dashboard error');
-        res.statusCode = 500;
-        res.end(errorPage('Internal server error'));
+        logger.error({ err }, 'Unhandled API error');
+        jsonResponse(res, 500, { error: 'Internal server error' });
       });
     });
 
     server.on('error', (err) => {
-      logger.error({ err }, 'Dashboard server error');
+      logger.error({ err }, 'API server error');
       reject(err);
     });
 
     server.listen(port, () => {
-      logger.info({ port }, 'Admin dashboard started');
+      logger.info({ port }, 'Admin JSON API started');
       resolve();
     });
   });
@@ -301,7 +310,7 @@ export function stopDashboard(): Promise<void> {
       return;
     }
     server.close(() => {
-      logger.info('Admin dashboard stopped');
+      logger.info('Admin JSON API stopped');
       server = null;
       resolve();
     });

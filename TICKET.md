@@ -545,7 +545,7 @@
     - [ ] Service starts successfully after `prisma migrate deploy`
 
 ### T-104: Admin frontend separation for Vercel deployment
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Decouple FE from in-process Railway HTML server so FE can be hosted on Vercel.
 - Tasks:
