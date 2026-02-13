@@ -532,7 +532,7 @@
     - [ ] Local onboarding docs work end-to-end without MySQL steps
 
 ### T-103: Railway deploy update for Postgres + runtime commands
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Make Railway deployment deterministic with Postgres and Prisma migrations.
 - Tasks:
