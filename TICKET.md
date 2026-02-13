@@ -484,3 +484,111 @@
 - Acceptance Criteria:
     - [x] README includes an architecture visual and 2–3 product screenshots
     - [x] `docs/submission/` contains a minimal, complete asset pack for judges
+
+---
+
+## Milestone M10 — Deployment Topology Migration (Contract Separate + FE Vercel + Core Railway + Postgres)
+### T-100: Deploy topology lock and service boundary definition
+- Status: DONE
+- Priority: P0
+- Goal: Freeze target runtime topology to prevent mixed assumptions during implementation.
+- Tasks:
+    - Define final service map:
+      - Smart contracts: external deployment pipeline (separate from app deploy)
+      - FE: Vercel
+      - Core services (bot/worker/API): Railway
+      - DB: Railway Postgres
+    - Decide whether Railway runs one process (bot+jobs+API) or split services (worker + API)
+    - Define environment variable ownership matrix (Vercel vs Railway vs contract deploy pipeline)
+- Acceptance Criteria:
+    - [ ] A single architecture/deploy document exists with concrete service boundaries
+    - [ ] Every runtime env var is assigned to exactly one platform owner
+
+### T-101: Prisma datasource migration MySQL -> Postgres
+- Status: TODO
+- Priority: P0
+- Goal: Move persistence layer to Postgres with Prisma migrations working in local and Railway.
+- Tasks:
+    - Change Prisma datasource provider to `postgresql`
+    - Replace MySQL-only column annotations (for example `@db.LongText`) with Postgres-compatible types
+    - Regenerate Prisma client and create Postgres baseline migration
+    - If existing MySQL data must be preserved, define one-time migration/backfill strategy
+- Acceptance Criteria:
+    - [ ] `npx prisma migrate dev` succeeds against Postgres
+    - [ ] `npx prisma migrate deploy` succeeds on clean Postgres database
+    - [ ] App boot + core DB paths work with Postgres
+
+### T-102: Local/dev environment conversion to Postgres
+- Status: TODO
+- Priority: P0
+- Goal: Keep local workflow identical after DB switch.
+- Tasks:
+    - Replace `docker-compose.yml` MySQL service with Postgres service and healthcheck
+    - Update `.env.example` default `DATABASE_URL` to Postgres format
+    - Update MySQL references in `README.md`, `LOCAL.md`, `DEMO.md`
+    - Run/update DB smoke script against Postgres
+- Acceptance Criteria:
+    - [ ] `docker compose up -d` starts local Postgres successfully
+    - [ ] Local onboarding docs work end-to-end without MySQL steps
+
+### T-103: Railway deploy update for Postgres + runtime commands
+- Status: TODO
+- Priority: P0
+- Goal: Make Railway deployment deterministic with Postgres and Prisma migrations.
+- Tasks:
+    - Update `docs/DEPLOY_RAILWAY.md` from MySQL plugin flow to Postgres plugin flow
+    - Verify install/build/start commands for Railway (including Prisma CLI availability at runtime)
+    - Add Railway-specific notes for migration execution order and rollback handling
+    - Add required env vars list for worker/API services
+- Acceptance Criteria:
+    - [ ] New Railway deployment doc works on a fresh project
+    - [ ] Service starts successfully after `prisma migrate deploy`
+
+### T-104: Admin frontend separation for Vercel deployment
+- Status: TODO
+- Priority: P0
+- Goal: Decouple FE from in-process Railway HTML server so FE can be hosted on Vercel.
+- Tasks:
+    - Extract current admin dashboard requirements from `src/admin/*`
+    - Provide Railway API endpoints (JSON) for groups/members/logs/health
+    - Add CORS and auth/session strategy for Vercel-hosted FE
+    - Keep bot/worker runtime isolated from FE concerns
+- Acceptance Criteria:
+    - [ ] FE can fetch dashboard data from Railway API using Vercel domain
+    - [ ] No server-rendered admin dependency remains coupled to bot process
+
+### T-105: Vercel FE deployment wiring
+- Status: TODO
+- Priority: P0
+- Goal: Ensure FE deploy is fully environment-driven and points to Railway services correctly.
+- Tasks:
+    - Configure FE runtime env (`API_BASE_URL`, network/contract config, telemetry flags as needed)
+    - Add Preview/Production env mapping in Vercel
+    - Validate FE routing, auth redirect, and API calls against Railway endpoints
+- Acceptance Criteria:
+    - [ ] FE preview + production builds pass on Vercel
+    - [ ] Core FE flows work against Railway backend without hardcoded local URLs
+
+### T-106: Contract external deployment integration
+- Status: TODO
+- Priority: P1
+- Goal: Handle separately deployed contracts without app redeploy churn.
+- Tasks:
+    - Define contract artifact handoff format (network, address, ABI/version)
+    - Add env/config loader on FE/backend for per-environment contract addresses
+    - Add validation on startup/build for missing or mismatched contract config
+- Acceptance Criteria:
+    - [ ] Contract addresses can be changed per environment without code changes
+    - [ ] Startup/build fails fast when contract config is invalid
+
+### T-107: Multi-platform CI/CD and smoke validation
+- Status: TODO
+- Priority: P1
+- Goal: Prevent cross-platform regressions (Vercel FE / Railway core / Postgres DB).
+- Tasks:
+    - Add pipeline checks for build/lint/typecheck and Prisma migration validation
+    - Add post-deploy smoke checks for Railway API/worker health and FE API connectivity
+    - Define release checklist covering contract deploy -> config update -> FE/core deploy order
+- Acceptance Criteria:
+    - [ ] CI blocks merges on failing migration/build checks
+    - [ ] Post-deploy smoke checklist passes for staging/production
