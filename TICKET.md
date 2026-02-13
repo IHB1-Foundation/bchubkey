@@ -505,7 +505,7 @@
     - [ ] Every runtime env var is assigned to exactly one platform owner
 
 ### T-101: Prisma datasource migration MySQL -> Postgres
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Move persistence layer to Postgres with Prisma migrations working in local and Railway.
 - Tasks:

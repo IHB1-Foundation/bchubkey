@@ -1,30 +1,19 @@
 services:
-  mysql:
-    image: mysql:8.0
-    command:
-      [
-        "mysqld",
-        "--character-set-server=utf8mb4",
-        "--collation-server=utf8mb4_unicode_ci"
-      ]
+  postgres:
+    image: postgres:16-alpine
     environment:
-      MYSQL_DATABASE: bchubkey
-      MYSQL_USER: bchubkey
-      MYSQL_PASSWORD: bchubkey
-      MYSQL_ROOT_PASSWORD: bchubkey_root
+      POSTGRES_DB: bchubkey
+      POSTGRES_USER: bchubkey
+      POSTGRES_PASSWORD: bchubkey
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - bchubkey_mysql:/var/lib/mysql
+      - bchubkey_pg:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"
-        ]
+      test: ["CMD-SHELL", "pg_isready -U bchubkey -d bchubkey"]
       interval: 5s
       timeout: 5s
       retries: 20
 
 volumes:
-  bchubkey_mysql:
+  bchubkey_pg:

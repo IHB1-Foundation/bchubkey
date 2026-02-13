@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -216,7 +216,7 @@ model AuditLog {
   groupId     String       @map("group_id")
   tgUserId    String?      @map("tg_user_id")
   type        AuditLogType
-  payloadJson String       @db.LongText @map("payload_json") // JSON string
+  payloadJson String       @db.Text @map("payload_json") // JSON string
   createdAt   DateTime     @default(now()) @map("created_at")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
