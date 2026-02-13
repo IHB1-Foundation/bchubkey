@@ -519,7 +519,7 @@
     - [ ] App boot + core DB paths work with Postgres
 
 ### T-102: Local/dev environment conversion to Postgres
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Keep local workflow identical after DB switch.
 - Tasks:

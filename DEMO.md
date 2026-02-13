@@ -10,7 +10,7 @@ cp .env.example .env
 # Required settings:
 TELEGRAM_BOT_TOKEN=<your-bot-token>
 BOT_PUBLIC_NAME=<your-bot-username>
-DATABASE_URL=mysql://bchubkey:bchubkey@localhost:3306/bchubkey
+DATABASE_URL=postgresql://bchubkey:bchubkey@localhost:5432/bchubkey
 
 # Enable demo mode (fast cycle):
 DEFAULT_RECHECK_INTERVAL_SEC=60
@@ -21,7 +21,7 @@ POLL_INTERVAL_SEC=10
 
 ### 2. Database Setup
 ```bash
-docker compose up -d mysql
+docker compose up -d postgres
 npx prisma migrate dev
 ```
 
@@ -191,7 +191,7 @@ npm run dev
 
 # Reset database (WARNING: loses all data)
 docker compose down -v
-docker compose up -d mysql
+docker compose up -d postgres
 npx prisma migrate dev
 
 # Quick settings check in Telegram
