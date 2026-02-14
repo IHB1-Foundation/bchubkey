@@ -61,6 +61,15 @@ export function validateStartupConfig(): ConfigValidationResult {
     warnings.push('ADMIN_CORS_ORIGIN is set but ADMIN_PORT is not; CORS config will have no effect');
   }
 
+  // Admin auth
+  if (process.env.ADMIN_AUTH_ENABLED === 'true') {
+    if (!process.env.ADMIN_JWT_SECRET) {
+      errors.push('ADMIN_JWT_SECRET is required when ADMIN_AUTH_ENABLED=true');
+    } else if (process.env.ADMIN_JWT_SECRET.length < 32) {
+      warnings.push('ADMIN_JWT_SECRET should be at least 32 characters for adequate security');
+    }
+  }
+
   // Log results
   for (const w of warnings) {
     logger.warn(w);

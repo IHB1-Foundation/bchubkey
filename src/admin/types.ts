@@ -83,4 +83,5 @@ export interface HealthResponse {
   uptime: number;
   demoMode: boolean;
   timestamp: string;
+  authEnabled: boolean;
 }

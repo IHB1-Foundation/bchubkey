@@ -636,7 +636,7 @@
     - [x] Newly configured groups always have at least one `OWNER`
 
 ### T-113: Admin API authentication middleware
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Block all unauthenticated access to admin endpoints.
 - Tasks:
@@ -645,8 +645,8 @@
     - Return standardized auth errors (`401` unauthenticated, `403` unauthorized)
     - Add secure cookie flags / token validation hardening (expiry, signature, replay checks)
 - Acceptance Criteria:
-    - [ ] Unauthenticated requests cannot access `/api/groups` or `/api/groups/:id`
-    - [ ] Authenticated requests include resolved admin identity in request context
+    - [x] Unauthenticated requests cannot access `/api/groups` or `/api/groups/:id`
+    - [x] Authenticated requests include resolved admin identity in request context
 
 ### T-114: Tenant authorization guard on every group-scoped query
 - Status: TODO
