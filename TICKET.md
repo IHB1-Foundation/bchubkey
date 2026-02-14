@@ -700,7 +700,7 @@
     - [x] Cross-tenant deny attempts are visible in logs
 
 ### T-118: Security tests (authn/authz/tenant isolation)
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Prevent regressions in access control.
 - Tasks:
@@ -709,8 +709,8 @@
     - Add negative tests for IDOR-style direct object access
     - Add CI gate to fail on security test regressions
 - Acceptance Criteria:
-    - [ ] Test suite proves tenant isolation for all admin endpoints
-    - [ ] CI fails on broken auth/authorization behavior
+    - [x] Test suite proves tenant isolation for all admin endpoints
+    - [x] CI fails on broken auth/authorization behavior
 
 ### T-119: Rollout plan and backward-compatible cutover
 - Status: TODO

@@ -20,7 +20,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "demo": "tsx scripts/demo.ts",
-    "demo:reset": "tsx scripts/demo-reset.ts"
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "test:security": "tsx tests/auth-security.test.ts"
   },
   "dependencies": {
     "@bitauth/libauth": "^3.0.0",
