@@ -592,3 +592,135 @@
 - Acceptance Criteria:
     - [ ] CI blocks merges on failing migration/build checks
     - [ ] Post-deploy smoke checklist passes for staging/production
+
+---
+
+## Milestone M11 — Admin Account + Multi-Tenant Access Control
+### T-110: Admin authentication architecture lock (Telegram-first)
+- Status: DONE
+- Priority: P0
+- Goal: Freeze auth strategy so API/FE/DB implementations stay consistent.
+- Tasks:
+    - Choose primary admin auth: Telegram Login (recommended) with optional future OAuth extension
+    - Define session model (cookie session or JWT) and expiration/refresh policy
+    - Define threat model for exposed Railway API (unauthorized read, cross-tenant access, token leakage)
+    - Define minimal RBAC roles (`OWNER`, `ADMIN`, `VIEWER`)
+- Acceptance Criteria:
+    - [x] Single auth design doc exists with token/session lifecycle and RBAC rules
+    - [x] Threat model includes concrete mitigations and rejection behavior (`401`, `403`)
+
+### T-111: Prisma schema for admin identity and group ownership
+- Status: TODO
+- Priority: P0
+- Goal: Persist admin identities and group-to-admin ownership for tenant isolation.
+- Tasks:
+    - Add `AdminUser` model (identity provider fields, display metadata)
+    - Add `GroupAdmin` model (group_id, admin_user_id, role, created_at)
+    - Add `AdminSession` model if server-side session storage is chosen
+    - Add indexes/uniques for fast authorization checks
+- Acceptance Criteria:
+    - [ ] Prisma migration applies cleanly to Postgres
+    - [ ] Query path exists for "which groups can this admin access?"
+
+### T-112: Group ownership bootstrap and claim flow
+- Status: TODO
+- Priority: P0
+- Goal: Safely attach existing groups to real admin accounts.
+- Tasks:
+    - Implement "group claim" flow with Telegram proof (challenge-response)
+    - Auto-register `/setup` executor as `OWNER` on new group setup
+    - Add fallback/manual override procedure for locked groups
+    - Write one-time bootstrap script for pre-existing data
+- Acceptance Criteria:
+    - [ ] Existing groups can be claimed by rightful admins
+    - [ ] Newly configured groups always have at least one `OWNER`
+
+### T-113: Admin API authentication middleware
+- Status: TODO
+- Priority: P0
+- Goal: Block all unauthenticated access to admin endpoints.
+- Tasks:
+    - Add auth middleware for `/api/*` admin endpoints
+    - Validate session token/cookie and resolve `admin_user_id`
+    - Return standardized auth errors (`401` unauthenticated, `403` unauthorized)
+    - Add secure cookie flags / token validation hardening (expiry, signature, replay checks)
+- Acceptance Criteria:
+    - [ ] Unauthenticated requests cannot access `/api/groups` or `/api/groups/:id`
+    - [ ] Authenticated requests include resolved admin identity in request context
+
+### T-114: Tenant authorization guard on every group-scoped query
+- Status: TODO
+- Priority: P0
+- Goal: Ensure each admin sees and manages only permitted groups.
+- Tasks:
+    - Enforce `GroupAdmin` membership filter on group list/detail/member/log queries
+    - Enforce authorization before returning group detail by ID
+    - Add explicit deny-path logging for cross-tenant access attempts
+    - Prevent horizontal privilege escalation through query params/search endpoints
+- Acceptance Criteria:
+    - [ ] Admin A cannot read Admin B's groups even with direct group ID calls
+    - [ ] Group list only returns groups mapped to current admin
+
+### T-115: Sensitive data exposure hardening
+- Status: TODO
+- Priority: P0
+- Goal: Remove secrets/internal codes from FE-facing APIs.
+- Tasks:
+    - Remove `setupCode` from public admin API responses
+    - Audit API payloads for sensitive fields (verification addresses, internal audit payloads, etc.)
+    - Add explicit DTO layer to whitelist response fields
+    - Add regression tests to prevent accidental secret re-exposure
+- Acceptance Criteria:
+    - [ ] FE-facing responses contain no setup secret/code material
+    - [ ] Contract and verification data exposed only at intended granularity
+
+### T-116: Vercel FE auth flow + guarded routing
+- Status: TODO
+- Priority: P0
+- Goal: Ensure FE routes are usable only by authenticated admins.
+- Tasks:
+    - Add login flow (Telegram login entry and callback handling)
+    - Persist/refresh session securely in browser
+    - Protect dashboard routes; redirect anonymous users to login
+    - Handle auth errors globally (expired session, forbidden group)
+- Acceptance Criteria:
+    - [ ] Anonymous user cannot access admin dashboard data
+    - [ ] Logged-in admin can only navigate to authorized groups
+
+### T-117: Audit trail for admin auth and authorization events
+- Status: TODO
+- Priority: P1
+- Goal: Track who accessed what for incident analysis and compliance.
+- Tasks:
+    - Add audit logs for login, logout, session refresh, auth failure, authorization denial
+    - Include admin user ID, target group ID, endpoint, and timestamp
+    - Add dashboard/API view for security-relevant events (restricted to owners/admins)
+- Acceptance Criteria:
+    - [ ] Security events are persisted and queryable
+    - [ ] Cross-tenant deny attempts are visible in logs
+
+### T-118: Security tests (authn/authz/tenant isolation)
+- Status: TODO
+- Priority: P1
+- Goal: Prevent regressions in access control.
+- Tasks:
+    - Add integration tests for unauthenticated/forbidden/success access paths
+    - Add tenant isolation tests for list/detail/filter endpoints
+    - Add negative tests for IDOR-style direct object access
+    - Add CI gate to fail on security test regressions
+- Acceptance Criteria:
+    - [ ] Test suite proves tenant isolation for all admin endpoints
+    - [ ] CI fails on broken auth/authorization behavior
+
+### T-119: Rollout plan and backward-compatible cutover
+- Status: TODO
+- Priority: P1
+- Goal: Introduce auth without breaking live admin operations.
+- Tasks:
+    - Add staged rollout plan: shadow mode -> soft enforcement -> hard enforcement
+    - Add feature flag for auth enforcement and emergency rollback switch
+    - Define migration checklist for existing groups/admins
+    - Update `docs/DEPLOY_RAILWAY.md`, `docs/DEPLOY_TOPOLOGY.md`, `docs/RELEASE_CHECKLIST.md`
+- Acceptance Criteria:
+    - [ ] Rollout can be executed with measurable checkpoints
+    - [ ] Emergency rollback path is documented and tested
