@@ -228,7 +228,7 @@
         const data = await fetchApi(`/api/groups/${id}`);
         const { group, rule, members, logs, stats } = data;
         let html = `<div class="card"><h2>${esc(group.title)}</h2>
-          <p>Mode: ${esc(group.mode)} | Status: ${badge(group.status)} | Code: <span class="mono">${esc(group.setupCode)}</span></p>`;
+          <p>Mode: ${esc(group.mode)} | Status: ${badge(group.status)}</p>`;
         if (rule) {
           html += `<p>Gate: ${esc(rule.gateType)} | Token: <span class="mono">${esc(rule.tokenId.substring(0,12))}...</span>
             | Min: ${rule.gateType === 'FT' ? rule.minAmountBase : rule.minNftCount}

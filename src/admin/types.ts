@@ -16,7 +16,6 @@ export interface GroupDetail {
   title: string;
   mode: string;
   status: string;
-  setupCode: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,7 +29,6 @@ export interface GateRuleDetail {
   recheckIntervalSec: number;
   gracePeriodSec: number;
   actionOnFail: string;
-  verifyAddress: string | null;
   verifyMinSat: number;
   verifyMaxSat: number;
 }

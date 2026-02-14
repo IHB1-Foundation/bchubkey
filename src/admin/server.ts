@@ -107,6 +107,25 @@ async function requireAuth(
   return auth;
 }
 
+// ── DTO Sanitization ──────────────────────────────────────────
+
+/** Fields to strip from audit log payloads before sending to FE */
+const SENSITIVE_PAYLOAD_KEYS = ['setupCode', 'verificationAddress', 'verifyAddress'];
+
+function sanitizeAuditPayload(payloadJson: string): string {
+  try {
+    const obj = JSON.parse(payloadJson);
+    for (const key of SENSITIVE_PAYLOAD_KEYS) {
+      if (key in obj) {
+        obj[key] = '[redacted]';
+      }
+    }
+    return JSON.stringify(obj);
+  } catch {
+    return payloadJson;
+  }
+}
+
 // ── Tenant Authorization ───────────────────────────────────────
 
 /**
@@ -267,7 +286,6 @@ async function getGroupDetail(
       title: group.title,
       mode: group.mode,
       status: group.status,
-      setupCode: group.setupCode,
       createdAt: group.createdAt.toISOString(),
       updatedAt: group.updatedAt.toISOString(),
     },
@@ -281,7 +299,6 @@ async function getGroupDetail(
           recheckIntervalSec: rule.recheckIntervalSec,
           gracePeriodSec: rule.gracePeriodSec,
           actionOnFail: rule.actionOnFail,
-          verifyAddress: rule.verifyAddress,
           verifyMinSat: rule.verifyMinSat,
           verifyMaxSat: rule.verifyMaxSat,
         }
@@ -299,7 +316,7 @@ async function getGroupDetail(
       id: l.id,
       type: l.type,
       tgUserId: l.tgUserId,
-      payloadJson: l.payloadJson,
+      payloadJson: sanitizeAuditPayload(l.payloadJson),
       createdAt: l.createdAt.toISOString(),
     })),
     stats: {

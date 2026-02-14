@@ -662,7 +662,7 @@
     - [x] Group list only returns groups mapped to current admin
 
 ### T-115: Sensitive data exposure hardening
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Remove secrets/internal codes from FE-facing APIs.
 - Tasks:
@@ -671,8 +671,8 @@
     - Add explicit DTO layer to whitelist response fields
     - Add regression tests to prevent accidental secret re-exposure
 - Acceptance Criteria:
-    - [ ] FE-facing responses contain no setup secret/code material
-    - [ ] Contract and verification data exposed only at intended granularity
+    - [x] FE-facing responses contain no setup secret/code material
+    - [x] Contract and verification data exposed only at intended granularity
 
 ### T-116: Vercel FE auth flow + guarded routing
 - Status: TODO
