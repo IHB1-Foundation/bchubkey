@@ -649,7 +649,7 @@
     - [x] Authenticated requests include resolved admin identity in request context
 
 ### T-114: Tenant authorization guard on every group-scoped query
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Ensure each admin sees and manages only permitted groups.
 - Tasks:
@@ -658,8 +658,8 @@
     - Add explicit deny-path logging for cross-tenant access attempts
     - Prevent horizontal privilege escalation through query params/search endpoints
 - Acceptance Criteria:
-    - [ ] Admin A cannot read Admin B's groups even with direct group ID calls
-    - [ ] Group list only returns groups mapped to current admin
+    - [x] Admin A cannot read Admin B's groups even with direct group ID calls
+    - [x] Group list only returns groups mapped to current admin
 
 ### T-115: Sensitive data exposure hardening
 - Status: TODO

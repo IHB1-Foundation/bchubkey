@@ -107,6 +107,33 @@ async function requireAuth(
   return auth;
 }
 
+// ── Tenant Authorization ───────────────────────────────────────
+
+/**
+ * Check if admin has access to a specific group.
+ * Returns the GroupAdmin role if authorized, null if denied.
+ */
+async function checkGroupAccess(
+  adminUserId: string,
+  groupId: string
+): Promise<string | null> {
+  if (!isAuthEnabled() || adminUserId === '__noauth__') return 'OWNER'; // no-auth fallback
+
+  const ga = await prisma.groupAdmin.findUnique({
+    where: {
+      groupId_adminUserId: { groupId, adminUserId },
+    },
+    select: { role: true },
+  });
+
+  if (!ga) {
+    logger.warn({ adminUserId, groupId }, 'Tenant authorization denied: no GroupAdmin record');
+    return null;
+  }
+
+  return ga.role;
+}
+
 // ── Data Queries ───────────────────────────────────────────────
 
 interface MemberQueryParams {
@@ -489,20 +516,10 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
       const groupId = groupMatch[1];
 
       // Tenant authorization: check admin has access to this group
-      if (isAuthEnabled() && auth.adminUserId !== '__noauth__') {
-        const hasAccess = await prisma.groupAdmin.findUnique({
-          where: {
-            groupId_adminUserId: { groupId, adminUserId: auth.adminUserId },
-          },
-        });
-        if (!hasAccess) {
-          logger.warn(
-            { adminUserId: auth.adminUserId, groupId },
-            'Cross-tenant access denied'
-          );
-          jsonResponse(res, 403, { error: 'Access denied' });
-          return;
-        }
+      const role = await checkGroupAccess(auth.adminUserId, groupId);
+      if (!role) {
+        jsonResponse(res, 403, { error: 'Access denied' });
+        return;
       }
 
       const pageParam = url.searchParams.get('page');
