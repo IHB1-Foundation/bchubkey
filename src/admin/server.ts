@@ -12,6 +12,7 @@ import {
   refreshSession,
   type TelegramLoginData,
 } from './auth.js';
+import { logAdminAudit } from './audit.js';
 import type {
   GroupSummary,
   GroupDetailResponse,
@@ -101,6 +102,10 @@ async function requireAuth(
 
   const auth = await extractAuth(req);
   if (!auth) {
+    logAdminAudit({
+      type: 'ADMIN_AUTH_FAIL',
+      payload: { reason: 'missing_or_invalid_token', path: req.url },
+    }).catch(() => {});
     jsonResponse(res, 401, { error: 'Authentication required' });
     return null;
   }
@@ -147,6 +152,12 @@ async function checkGroupAccess(
 
   if (!ga) {
     logger.warn({ adminUserId, groupId }, 'Tenant authorization denied: no GroupAdmin record');
+    logAdminAudit({
+      type: 'ADMIN_AUTHZ_DENY',
+      adminUserId,
+      groupId,
+      payload: { reason: 'no_group_admin_record' },
+    }).catch(() => {}); // fire and forget
     return null;
   }
 
@@ -411,7 +422,7 @@ async function handleAuthLogout(
     return;
   }
 
-  await revokeSession(auth.sessionId);
+  await revokeSession(auth.sessionId, auth.adminUserId);
   jsonResponse(res, 200, { ok: true });
 }
 

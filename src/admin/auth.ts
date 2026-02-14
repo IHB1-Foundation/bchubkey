@@ -3,6 +3,7 @@
 import { createHmac, createHash } from 'node:crypto';
 import { prisma } from '../db/client.js';
 import { createChildLogger } from '../util/logger.js';
+import { logAdminAudit } from './audit.js';
 
 const logger = createChildLogger('admin:auth');
 
@@ -158,6 +159,11 @@ export async function authenticateTelegram(
 ): Promise<AuthResult | null> {
   if (!validateTelegramLogin(data)) {
     logger.warn({ tgId: data.id }, 'Invalid Telegram Login signature');
+    await logAdminAudit({
+      type: 'ADMIN_AUTH_FAIL',
+      tgUserId: String(data.id),
+      payload: { reason: 'invalid_signature', ipAddress: meta?.ipAddress },
+    });
     return null;
   }
 
@@ -201,6 +207,13 @@ export async function authenticateTelegram(
 
   logger.info({ adminUserId: adminUser.id, tgUserId }, 'Admin authenticated via Telegram Login');
 
+  await logAdminAudit({
+    type: 'ADMIN_LOGIN',
+    adminUserId: adminUser.id,
+    tgUserId,
+    payload: { ipAddress: meta?.ipAddress, sessionId: session.id },
+  });
+
   return {
     token,
     adminUser: {
@@ -240,11 +253,19 @@ export async function validateSession(
 /**
  * Revoke a session (logout).
  */
-export async function revokeSession(sessionId: string): Promise<void> {
+export async function revokeSession(sessionId: string, adminUserId?: string): Promise<void> {
   await prisma.adminSession.update({
     where: { id: sessionId },
     data: { revokedAt: new Date() },
   });
+
+  if (adminUserId) {
+    await logAdminAudit({
+      type: 'ADMIN_LOGOUT',
+      adminUserId,
+      payload: { sessionId },
+    });
+  }
 }
 
 /**
@@ -260,8 +281,11 @@ export async function refreshSession(
   });
   if (!adminUser) return null;
 
-  // Revoke old session
-  await revokeSession(oldSessionId);
+  // Revoke old session (no audit for revocation during refresh — we log the refresh instead)
+  await prisma.adminSession.update({
+    where: { id: oldSessionId },
+    data: { revokedAt: new Date() },
+  });
 
   // Create new session
   const session = await prisma.adminSession.create({
@@ -277,6 +301,13 @@ export async function refreshSession(
     sub: adminUser.id,
     tgId: adminUser.tgUserId,
     sid: session.id,
+  });
+
+  await logAdminAudit({
+    type: 'ADMIN_SESSION_REFRESH',
+    adminUserId,
+    tgUserId: adminUser.tgUserId,
+    payload: { oldSessionId, newSessionId: session.id },
   });
 
   return { token, sessionId: session.id };

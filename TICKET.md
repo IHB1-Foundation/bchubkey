@@ -688,7 +688,7 @@
     - [x] Logged-in admin can only navigate to authorized groups
 
 ### T-117: Audit trail for admin auth and authorization events
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Track who accessed what for incident analysis and compliance.
 - Tasks:
@@ -696,8 +696,8 @@
     - Include admin user ID, target group ID, endpoint, and timestamp
     - Add dashboard/API view for security-relevant events (restricted to owners/admins)
 - Acceptance Criteria:
-    - [ ] Security events are persisted and queryable
-    - [ ] Cross-tenant deny attempts are visible in logs
+    - [x] Security events are persisted and queryable
+    - [x] Cross-tenant deny attempts are visible in logs
 
 ### T-118: Security tests (authn/authz/tenant isolation)
 - Status: TODO
