@@ -610,7 +610,7 @@
     - [x] Threat model includes concrete mitigations and rejection behavior (`401`, `403`)
 
 ### T-111: Prisma schema for admin identity and group ownership
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Persist admin identities and group-to-admin ownership for tenant isolation.
 - Tasks:
@@ -619,8 +619,8 @@
     - Add `AdminSession` model if server-side session storage is chosen
     - Add indexes/uniques for fast authorization checks
 - Acceptance Criteria:
-    - [ ] Prisma migration applies cleanly to Postgres
-    - [ ] Query path exists for "which groups can this admin access?"
+    - [x] Prisma migration applies cleanly to Postgres
+    - [x] Query path exists for "which groups can this admin access?"
 
 ### T-112: Group ownership bootstrap and claim flow
 - Status: TODO

@@ -81,6 +81,18 @@ enum AuditLogType {
   GRACE_START
   GRACE_EXPIRED
   ERROR
+  // Admin auth events (M11)
+  ADMIN_LOGIN
+  ADMIN_LOGOUT
+  ADMIN_AUTH_FAIL
+  ADMIN_AUTHZ_DENY
+  ADMIN_SESSION_REFRESH
+}
+
+enum AdminRole {
+  OWNER
+  ADMIN
+  VIEWER
 }
 
 // ============================================
@@ -102,6 +114,7 @@ model Group {
   memberships Membership[]
   auditLogs   AuditLog[]
   sessions    VerifySession[]
+  groupAdmins GroupAdmin[]
 
   @@map("groups")
 }
@@ -225,4 +238,60 @@ model AuditLog {
   @@index([groupId, createdAt])
   @@index([tgUserId, createdAt])
   @@map("audit_logs")
+}
+
+// ============================================
+// Admin Identity & Access Control (M11)
+// ============================================
+
+/// Admin user identity (Telegram Login is primary auth provider)
+model AdminUser {
+  id           String    @id @default(uuid())
+  tgUserId     String    @unique @map("tg_user_id") // Telegram user ID as string
+  username     String?
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  photoUrl     String?   @map("photo_url")
+  authProvider String    @default("telegram") @map("auth_provider")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  groupAdmins  GroupAdmin[]
+  adminSessions AdminSession[]
+
+  @@map("admin_users")
+}
+
+/// Maps admin users to groups with a specific role
+model GroupAdmin {
+  id          String    @id @default(uuid())
+  groupId     String    @map("group_id")
+  adminUserId String    @map("admin_user_id")
+  role        AdminRole @default(VIEWER)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, adminUserId])
+  @@index([adminUserId])
+  @@map("group_admins")
+}
+
+/// Server-side admin session for JWT revocation support
+model AdminSession {
+  id          String    @id @default(uuid())
+  adminUserId String    @map("admin_user_id")
+  expiresAt   DateTime  @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent") @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, revokedAt])
+  @@index([expiresAt])
+  @@map("admin_sessions")
 }
