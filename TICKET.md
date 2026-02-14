@@ -623,7 +623,7 @@
     - [x] Query path exists for "which groups can this admin access?"
 
 ### T-112: Group ownership bootstrap and claim flow
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Safely attach existing groups to real admin accounts.
 - Tasks:
@@ -632,8 +632,8 @@
     - Add fallback/manual override procedure for locked groups
     - Write one-time bootstrap script for pre-existing data
 - Acceptance Criteria:
-    - [ ] Existing groups can be claimed by rightful admins
-    - [ ] Newly configured groups always have at least one `OWNER`
+    - [x] Existing groups can be claimed by rightful admins
+    - [x] Newly configured groups always have at least one `OWNER`
 
 ### T-113: Admin API authentication middleware
 - Status: TODO

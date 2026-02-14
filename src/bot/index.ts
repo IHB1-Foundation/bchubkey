@@ -9,6 +9,7 @@ import { handleAudit } from './commands/audit.js';
 import { handleExport } from './commands/export.js';
 import { handlePause, handleResume } from './commands/pause.js';
 import { handleBanfail } from './commands/banfail.js';
+import { handleClaim } from './commands/claim.js';
 import { handleCallbackQuery } from './callbacks/index.js';
 import { handleWizardTextInput } from './wizard/handlers.js';
 import { handleVerifyTextInput } from '../verify/handlers.js';
@@ -40,6 +41,7 @@ export function createBot(): Telegraf {
   telegraf.command('pause', handlePause);
   telegraf.command('resume', handleResume);
   telegraf.command('banfail', handleBanfail);
+  telegraf.command('claim', handleClaim);
 
   // Register callback query handler
   telegraf.on('callback_query', handleCallbackQuery);

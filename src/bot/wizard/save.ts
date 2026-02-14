@@ -71,6 +71,30 @@ export async function saveGroupConfig(state: WizardState): Promise<SaveResult> {
     },
   });
 
+  // Auto-register /setup executor as OWNER (M11: T-112)
+  const adminUser = await prisma.adminUser.upsert({
+    where: { tgUserId: state.userId },
+    update: { updatedAt: new Date() },
+    create: {
+      tgUserId: state.userId,
+      authProvider: 'telegram',
+    },
+  });
+
+  await prisma.groupAdmin.upsert({
+    where: {
+      groupId_adminUserId: { groupId, adminUserId: adminUser.id },
+    },
+    update: { role: 'OWNER', updatedAt: new Date() },
+    create: {
+      groupId,
+      adminUserId: adminUser.id,
+      role: 'OWNER',
+    },
+  });
+
+  logger.info({ groupId, adminUserId: adminUser.id }, 'Admin user registered as OWNER');
+
   // Log to audit
   await prisma.auditLog.create({
     data: {
@@ -82,6 +106,7 @@ export async function saveGroupConfig(state: WizardState): Promise<SaveResult> {
         tokenId: data.tokenId,
         mode: data.mode,
         setupCode,
+        adminUserId: adminUser.id,
       }),
     },
   });
