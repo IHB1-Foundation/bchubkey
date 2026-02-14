@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { logger, isDemoMode } from './util/logger.js';
+import { validateStartupConfig } from './util/config.js';
 import { startBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
 import {
@@ -12,6 +13,12 @@ import { startJobs, stopJobs } from './jobs/index.js';
 import { startDashboard, stopDashboard } from './admin/index.js';
 
 async function main() {
+  // Validate configuration before anything else
+  const configResult = validateStartupConfig();
+  if (!configResult.valid) {
+    logger.fatal({ errors: configResult.errors }, 'Invalid configuration — aborting startup');
+    process.exit(1);
+  }
   // Prominent demo mode indicator at startup
   if (isDemoMode()) {
     logger.info('========================================');

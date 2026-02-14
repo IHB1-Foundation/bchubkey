@@ -570,7 +570,7 @@
     - [ ] Core FE flows work against Railway backend without hardcoded local URLs
 
 ### T-106: Contract external deployment integration
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Handle separately deployed contracts without app redeploy churn.
 - Tasks:
