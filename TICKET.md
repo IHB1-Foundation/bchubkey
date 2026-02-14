@@ -713,7 +713,7 @@
     - [x] CI fails on broken auth/authorization behavior
 
 ### T-119: Rollout plan and backward-compatible cutover
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Introduce auth without breaking live admin operations.
 - Tasks:
@@ -722,5 +722,5 @@
     - Define migration checklist for existing groups/admins
     - Update `docs/DEPLOY_RAILWAY.md`, `docs/DEPLOY_TOPOLOGY.md`, `docs/RELEASE_CHECKLIST.md`
 - Acceptance Criteria:
-    - [ ] Rollout can be executed with measurable checkpoints
-    - [ ] Emergency rollback path is documented and tested
+    - [x] Rollout can be executed with measurable checkpoints
+    - [x] Emergency rollback path is documented and tested

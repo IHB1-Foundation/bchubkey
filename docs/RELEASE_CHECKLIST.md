@@ -4,6 +4,7 @@
 
 - [ ] CI pipeline passes (build, lint, format, typecheck, migration validation)
 - [ ] Local Postgres smoke test passes (`npx tsx scripts/smoke-db.ts`)
+- [ ] Security tests pass (`npm run test:security`)
 - [ ] `npm run build` succeeds with no errors
 
 ## Deploy Order
@@ -22,6 +23,7 @@ Follow this order to avoid cross-platform inconsistencies:
 
 ### 3. Vercel FE Deploy
 - [ ] Verify `API_BASE_URL` env var points to correct Railway service
+- [ ] Verify `BOT_USERNAME` env var is set (for Telegram Login Widget)
 - [ ] Push or trigger Vercel deploy
 - [ ] Verify `generate-env.sh` runs and generates `env.js`
 
@@ -44,6 +46,8 @@ Follow this order to avoid cross-platform inconsistencies:
 - [ ] **API connectivity**: Groups list loads (no CORS errors in console)
 - [ ] **Health indicator**: Header shows green dot with uptime
 - [ ] **Dark mode**: Toggle works and persists
+- [ ] **Auth flow**: If `ADMIN_AUTH_ENABLED=true`, login via Telegram works
+- [ ] **Tenant isolation**: Logged-in admin sees only their groups
 
 ### End-to-End
 - [ ] **Setup flow**: Admin can run `/setup` and complete wizard

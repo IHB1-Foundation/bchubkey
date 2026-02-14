@@ -49,12 +49,16 @@ Vercel FE will consume these JSON endpoints.
 | `DEFAULT_GRACE_PERIOD_SEC`    | No       | Default: `300`                               |
 | `ADMIN_PORT`                   | No       | JSON API port; on Railway use `${PORT}`      |
 | `ADMIN_CORS_ORIGIN`           | No       | Vercel FE domain for CORS (e.g. `https://bchubkey.vercel.app`) |
+| `ADMIN_AUTH_ENABLED`          | No       | `true` to enforce JWT auth on admin API (default: `false`)     |
+| `ADMIN_JWT_SECRET`            | *        | HS256 signing secret (required when auth enabled, 32+ chars)   |
+| `ADMIN_SESSION_TTL_SEC`       | No       | JWT/session expiry in seconds (default: `86400`)               |
 
 ### Vercel (Admin FE)
 
 | Variable          | Required | Description                                      |
 |-------------------|----------|--------------------------------------------------|
 | `API_BASE_URL`    | Yes      | Railway Core JSON API URL (e.g. `https://bchubkey-core.up.railway.app`) |
+| `BOT_USERNAME`    | No       | Telegram bot username for Login Widget (e.g. `BCHubKeyBot`)            |
 
 ### Contract Deploy Pipeline (External)
 
