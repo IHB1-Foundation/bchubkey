@@ -558,7 +558,7 @@
     - [ ] No server-rendered admin dependency remains coupled to bot process
 
 ### T-105: Vercel FE deployment wiring
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Ensure FE deploy is fully environment-driven and points to Railway services correctly.
 - Tasks:
