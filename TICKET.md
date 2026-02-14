@@ -582,7 +582,7 @@
     - [ ] Startup/build fails fast when contract config is invalid
 
 ### T-107: Multi-platform CI/CD and smoke validation
-- Status: TODO
+- Status: DONE
 - Priority: P1
 - Goal: Prevent cross-platform regressions (Vercel FE / Railway core / Postgres DB).
 - Tasks:
