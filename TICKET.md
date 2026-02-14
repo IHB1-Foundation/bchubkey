@@ -675,7 +675,7 @@
     - [x] Contract and verification data exposed only at intended granularity
 
 ### T-116: Vercel FE auth flow + guarded routing
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Goal: Ensure FE routes are usable only by authenticated admins.
 - Tasks:
@@ -684,8 +684,8 @@
     - Protect dashboard routes; redirect anonymous users to login
     - Handle auth errors globally (expired session, forbidden group)
 - Acceptance Criteria:
-    - [ ] Anonymous user cannot access admin dashboard data
-    - [ ] Logged-in admin can only navigate to authorized groups
+    - [x] Anonymous user cannot access admin dashboard data
+    - [x] Logged-in admin can only navigate to authorized groups
 
 ### T-117: Audit trail for admin auth and authorization events
 - Status: TODO

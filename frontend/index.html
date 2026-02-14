@@ -65,6 +65,7 @@
       font-size: 0.85rem;
     }
     .controls button:hover { border-color: var(--color-accent); }
+    .user-info { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
     main { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
     .card {
       background: var(--color-card);
@@ -109,6 +110,17 @@
     a:hover { text-decoration: underline; }
     .mono { font-family: 'SF Mono', Consolas, monospace; font-size: 0.85rem; }
     #detail-view { display: none; }
+    /* Login view */
+    #login-view {
+      display: none;
+      text-align: center;
+      padding: 80px 24px;
+    }
+    #login-view h2 { font-size: 1.5rem; margin-bottom: 16px; }
+    #login-view p { color: var(--color-muted); margin-bottom: 32px; }
+    #telegram-login { display: inline-block; }
+    /* Dashboard views (hidden until authed) */
+    #dashboard { display: none; }
   </style>
 </head>
 <body>
@@ -119,28 +131,47 @@
         <span class="dot"></span>
         <span id="health-text">Connecting...</span>
       </div>
+      <span class="user-info" id="user-info"></span>
       <button onclick="toggleTheme()">Theme</button>
       <button onclick="refresh()">Refresh</button>
+      <button id="logout-btn" onclick="doLogout()" style="display:none">Logout</button>
     </div>
   </header>
-  <main>
-    <div id="list-view">
-      <div class="stats" id="stats"></div>
-      <div class="card">
-        <h2>Groups</h2>
-        <div id="groups-table"><div class="loading">Loading...</div></div>
+
+  <!-- Login view -->
+  <div id="login-view">
+    <h2>Admin Dashboard</h2>
+    <p>Sign in with your Telegram account to access the dashboard.</p>
+    <div id="telegram-login"></div>
+    <p id="login-error" class="error-msg" style="display:none"></p>
+    <p id="no-auth-msg" style="display:none; color: var(--color-muted); margin-top: 16px;">
+      Authentication is not enabled. <a href="#" onclick="enterNoAuth(); return false;">Continue without login</a>
+    </p>
+  </div>
+
+  <!-- Dashboard (shown after auth) -->
+  <div id="dashboard">
+    <main>
+      <div id="list-view">
+        <div class="stats" id="stats"></div>
+        <div class="card">
+          <h2>Groups</h2>
+          <div id="groups-table"><div class="loading">Loading...</div></div>
+        </div>
       </div>
-    </div>
-    <div id="detail-view">
-      <p><a href="#" onclick="showList(); return false;">&larr; Back to groups</a></p>
-      <div id="detail-content"></div>
-    </div>
-  </main>
+      <div id="detail-view">
+        <p><a href="#" onclick="showList(); return false;">&larr; Back to groups</a></p>
+        <div id="detail-content"></div>
+      </div>
+    </main>
+  </div>
+
   <script src="/env.js"></script>
   <script>
-    // API_BASE_URL is injected at deploy time or defaults to same-origin
     const API_BASE = window.__ENV__?.API_BASE_URL || '';
+    const BOT_USERNAME = window.__ENV__?.BOT_USERNAME || '';
 
+    // ── Theme ──────────────────────────────────────
     function getTheme() { return localStorage.getItem('theme') || 'light'; }
     function toggleTheme() {
       const next = getTheme() === 'dark' ? 'light' : 'dark';
@@ -149,29 +180,146 @@
     }
     document.documentElement.setAttribute('data-theme', getTheme());
 
+    // ── Auth State ─────────────────────────────────
+    let authToken = localStorage.getItem('admin_token') || null;
+    let authUser = null;
+    let authEnabled = null; // null = unknown, true/false after health check
+
+    function getAuthHeaders() {
+      const h = { 'Content-Type': 'application/json' };
+      if (authToken) h['Authorization'] = `Bearer ${authToken}`;
+      return h;
+    }
+
+    // ── Helpers ────────────────────────────────────
     function badge(state) {
       const cls = state.includes('PASS') ? 'pass' : state.includes('FAIL') ? 'fail' : 'pending';
       return `<span class="badge badge-${cls}">${esc(state)}</span>`;
     }
-
     function esc(s) {
       if (!s) return '';
       const d = document.createElement('div');
       d.textContent = s;
       return d.innerHTML;
     }
-
     function fmtDate(iso) {
       if (!iso) return '-';
       return new Date(iso).toLocaleString();
     }
 
     async function fetchApi(path) {
-      const res = await fetch(`${API_BASE}${path}`);
+      const res = await fetch(`${API_BASE}${path}`, { headers: getAuthHeaders() });
+      if (res.status === 401) {
+        handleAuthExpired();
+        throw new Error('Session expired');
+      }
+      if (res.status === 403) throw new Error('Access denied');
       if (!res.ok) throw new Error(`API ${res.status}`);
       return res.json();
     }
 
+    async function postApi(path, body) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `API ${res.status}`);
+      }
+      return res.json();
+    }
+
+    // ── Auth Flow ──────────────────────────────────
+
+    function handleAuthExpired() {
+      authToken = null;
+      authUser = null;
+      localStorage.removeItem('admin_token');
+      showLoginView();
+    }
+
+    function showLoginView() {
+      document.getElementById('login-view').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('logout-btn').style.display = 'none';
+      document.getElementById('user-info').textContent = '';
+
+      // Render Telegram Login Widget if bot username is configured
+      const container = document.getElementById('telegram-login');
+      container.innerHTML = '';
+      if (BOT_USERNAME) {
+        const script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.setAttribute('data-telegram-login', BOT_USERNAME);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+        script.setAttribute('data-request-access', 'write');
+        container.appendChild(script);
+      } else {
+        container.innerHTML = '<p style="color:var(--color-muted)">Bot username not configured. Set BOT_USERNAME in env.js.</p>';
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('logout-btn').style.display = 'inline-block';
+      if (authUser) {
+        document.getElementById('user-info').textContent = authUser.username
+          ? `@${authUser.username}`
+          : authUser.firstName || 'Admin';
+      }
+      loadGroups();
+    }
+
+    // Telegram Login Widget callback (global function)
+    window.onTelegramAuth = async function(user) {
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+      try {
+        const result = await postApi('/api/auth/telegram', user);
+        authToken = result.token;
+        authUser = result.user;
+        localStorage.setItem('admin_token', authToken);
+        showDashboard();
+      } catch (e) {
+        errEl.textContent = `Login failed: ${e.message}`;
+        errEl.style.display = 'block';
+      }
+    };
+
+    function enterNoAuth() {
+      // When auth is disabled, just show the dashboard
+      authToken = null;
+      showDashboard();
+    }
+
+    async function doLogout() {
+      try {
+        if (authToken) await postApi('/api/auth/logout', {});
+      } catch { /* ignore */ }
+      authToken = null;
+      authUser = null;
+      localStorage.removeItem('admin_token');
+      showLoginView();
+    }
+
+    async function tryRestoreSession() {
+      if (!authToken) return false;
+      try {
+        const data = await fetchApi('/api/auth/me');
+        authUser = data.user;
+        return true;
+      } catch {
+        authToken = null;
+        localStorage.removeItem('admin_token');
+        return false;
+      }
+    }
+
+    // ── Health Check ───────────────────────────────
     async function checkHealth() {
       const dot = document.querySelector('#health .dot');
       const text = document.getElementById('health-text');
@@ -179,12 +327,14 @@
         const h = await fetchApi('/api/health');
         dot.className = 'dot ok';
         text.textContent = `OK (${h.uptime}s)${h.demoMode ? ' DEMO' : ''}`;
+        authEnabled = h.authEnabled;
       } catch {
         dot.className = 'dot err';
         text.textContent = 'Offline';
       }
     }
 
+    // ── Groups List ────────────────────────────────
     async function loadGroups() {
       const container = document.getElementById('groups-table');
       const statsEl = document.getElementById('stats');
@@ -219,6 +369,7 @@
       }
     }
 
+    // ── Group Detail ───────────────────────────────
     async function showGroup(id) {
       document.getElementById('list-view').style.display = 'none';
       document.getElementById('detail-view').style.display = 'block';
@@ -267,9 +418,31 @@
 
     function refresh() { checkHealth(); loadGroups(); }
 
-    // Init
-    checkHealth();
-    loadGroups();
+    // ── Init ───────────────────────────────────────
+    async function init() {
+      await checkHealth();
+
+      if (authEnabled === false) {
+        // Auth not enabled — show dashboard directly
+        document.getElementById('no-auth-msg').style.display = 'block';
+        showDashboard();
+        return;
+      }
+
+      // Auth enabled: try to restore existing session
+      if (authToken) {
+        const valid = await tryRestoreSession();
+        if (valid) {
+          showDashboard();
+          return;
+        }
+      }
+
+      // No valid session — show login
+      showLoginView();
+    }
+
+    init();
     setInterval(checkHealth, 30000);
   </script>
 </body>

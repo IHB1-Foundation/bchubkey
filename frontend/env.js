@@ -3,4 +3,5 @@
 // or replaced with actual values. Locally, edit this directly.
 window.__ENV__ = {
   API_BASE_URL: '', // empty = same origin; set to Railway URL in production
+  BOT_USERNAME: '', // Telegram bot username for Login Widget (e.g. 'BCHubKeyBot')
 };

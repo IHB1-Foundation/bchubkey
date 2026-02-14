@@ -4,6 +4,7 @@
 cat > env.js << ENVEOF
 window.__ENV__ = {
   API_BASE_URL: "${API_BASE_URL:-}",
+  BOT_USERNAME: "${BOT_USERNAME:-}",
 };
 ENVEOF
-echo "Generated env.js with API_BASE_URL=${API_BASE_URL:-<empty>}"
+echo "Generated env.js with API_BASE_URL=${API_BASE_URL:-<empty>} BOT_USERNAME=${BOT_USERNAME:-<empty>}"
