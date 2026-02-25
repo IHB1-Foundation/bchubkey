@@ -31,8 +31,7 @@ export async function handleRecheck(ctx: Context) {
 
   if (!verifiedAddress) {
     await ctx.reply(
-      `No verified active address found.\n\n` +
-        `Run /verify first to complete ownership proof.`
+      `No verified active address found.\n\n` + `Run /verify first to complete ownership proof.`
     );
     return;
   }

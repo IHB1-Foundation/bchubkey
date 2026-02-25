@@ -2,7 +2,11 @@ import type { Context } from 'telegraf';
 import { Markup } from 'telegraf';
 import { prisma } from '../../db/client.js';
 import { createChildLogger } from '../../util/logger.js';
-import { createVerifyFlowState, getVerifyFlowState, updateVerifyFlowState } from '../../verify/state.js';
+import {
+  createVerifyFlowState,
+  getVerifyFlowState,
+  updateVerifyFlowState,
+} from '../../verify/state.js';
 
 const logger = createChildLogger('bot:cmd:verify');
 
@@ -62,7 +66,9 @@ export async function handleVerifyCommand(ctx: Context) {
         pendingSession.group.title,
         gateRule.gateType,
         gateRule.tokenId,
-        gateRule.gateType === 'FT' ? (gateRule.minAmountBase ?? '0') : `${gateRule.minNftCount ?? 1}`,
+        gateRule.gateType === 'FT'
+          ? (gateRule.minAmountBase ?? '0')
+          : `${gateRule.minNftCount ?? 1}`,
         gateRule.verifyAddress
       );
 
@@ -110,7 +116,9 @@ export async function handleVerifyCommand(ctx: Context) {
   });
 
   if (!gateRule?.verifyAddress) {
-    await ctx.reply('This group is not fully configured for verification yet. Contact the group admin.');
+    await ctx.reply(
+      'This group is not fully configured for verification yet. Contact the group admin.'
+    );
     return;
   }
 

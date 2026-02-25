@@ -56,7 +56,14 @@ export async function handleGate(ctx: Context) {
 
   switch (sub) {
     case 'set':
-      await handleGateSet(ctx, groupId, fromUserId.toString(), gateRule.id, gateRule.gateType, args);
+      await handleGateSet(
+        ctx,
+        groupId,
+        fromUserId.toString(),
+        gateRule.id,
+        gateRule.gateType,
+        args
+      );
       return;
     case 'mode':
       await handleGateMode(ctx, groupId, fromUserId.toString(), args);
@@ -68,9 +75,12 @@ export async function handleGate(ctx: Context) {
       await handleGateInterval(ctx, groupId, fromUserId.toString(), gateRule.id, args);
       return;
     default:
-      await ctx.reply(renderUsage(group.mode, gateRule.recheckIntervalSec, gateRule.gracePeriodSec), {
-        parse_mode: 'Markdown',
-      });
+      await ctx.reply(
+        renderUsage(group.mode, gateRule.recheckIntervalSec, gateRule.gracePeriodSec),
+        {
+          parse_mode: 'Markdown',
+        }
+      );
   }
 }
 
@@ -87,8 +97,7 @@ async function handleGateSet(
 
   if (!tokenId || !minRaw) {
     await ctx.reply(
-      `Usage: \`/gate set <tokenId> <min>\`\n\n` +
-        `Example: \`/gate set aabbcc... 1\``,
+      `Usage: \`/gate set <tokenId> <min>\`\n\n` + `Example: \`/gate set aabbcc... 1\``,
       { parse_mode: 'Markdown' }
     );
     return;
@@ -139,9 +148,7 @@ async function handleGateSet(
   await logGateAudit(groupId, actorTgUserId, 'set', { tokenId, min: minRaw });
 
   await ctx.reply(
-    `Gate updated.\n\n` +
-      `• Token: \`${tokenId.slice(0, 16)}...\`\n` +
-      `• Minimum: ${minRaw}`,
+    `Gate updated.\n\n` + `• Token: \`${tokenId.slice(0, 16)}...\`\n` + `• Minimum: ${minRaw}`,
     { parse_mode: 'Markdown' }
   );
 }

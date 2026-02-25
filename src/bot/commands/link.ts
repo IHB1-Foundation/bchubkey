@@ -49,8 +49,7 @@ export async function handleLink(ctx: Context) {
   const validation = validateCashAddress(inputAddress);
   if (!validation.valid || !validation.address) {
     await ctx.reply(
-      `Invalid BCH address.\n\n` +
-        `${validation.error ?? 'Please provide a valid cashaddr.'}`,
+      `Invalid BCH address.\n\n` + `${validation.error ?? 'Please provide a valid cashaddr.'}`,
       { parse_mode: 'Markdown' }
     );
     return;
@@ -108,15 +107,12 @@ export async function handleLink(ctx: Context) {
       sessionId: undefined,
     });
 
-    await ctx.reply(
-      `Address updated.\n\nClick to continue ownership proof.`,
-      {
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Proceed to Verification', `verify_proceed:${flow.groupId}`)],
-          [Markup.button.callback('Cancel', 'verify_cancel')],
-        ]),
-      }
-    );
+    await ctx.reply(`Address updated.\n\nClick to continue ownership proof.`, {
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('Proceed to Verification', `verify_proceed:${flow.groupId}`)],
+        [Markup.button.callback('Cancel', 'verify_cancel')],
+      ]),
+    });
     return;
   }
 
