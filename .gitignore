@@ -28,3 +28,8 @@ Thumbs.db
 logs/
 
 /src/generated/prisma
+
+# Local-only documentation (do not publish except root README)
+/docs/
+/*.md
+!/README.md

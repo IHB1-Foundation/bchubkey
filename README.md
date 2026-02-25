@@ -4,8 +4,6 @@
 
 Automatically gate and manage Telegram groups based on BCH CashTokens holdings, with ownership proof and automatic enforcement.
 
-![Architecture](./docs/architecture.svg)
-
 ## Requirements
 
 - Node.js 20+
@@ -34,7 +32,7 @@ Automatically gate and manage Telegram groups based on BCH CashTokens holdings, 
    npx prisma migrate dev
    ```
 
-Deployment guide (Railway + Vercel + Postgres): see `DEPLOY.md`.
+Deployment and operations documentation is maintained in private internal docs.
 
 ## Development
 
@@ -71,37 +69,13 @@ src/
 └── util/         # Logging, validation, helpers
 ```
 
-## Demo & Submission
-
-### Quick Start (Demo Mode)
+## Demo
 
 ```bash
-# Start with fast intervals for live demo
 npm run demo
-
-# Optional: Reset database for fresh demo
-npm run demo:reset
 ```
 
-Demo mode enables:
-- 1-minute recheck interval
-- 30-second grace period
-- Admin dashboard at http://localhost:3000
-
-### Submission Assets
-
-| Document | Description |
-|----------|-------------|
-| [DEMO.md](./DEMO.md) | Demo script + failure playbook |
-| [docs/submission/PITCH_DECK.md](./docs/submission/PITCH_DECK.md) | Pitch deck outline |
-| [docs/submission/VIDEO_GUIDE.md](./docs/submission/VIDEO_GUIDE.md) | Video recording guide |
-| [docs/submission/BCH1_FINAL_SUBMISSION_CHECKLIST.md](./docs/submission/BCH1_FINAL_SUBMISSION_CHECKLIST.md) | Final submission checklist |
-| [docs/submission/BUILT_VS_PROPOSED.md](./docs/submission/BUILT_VS_PROPOSED.md) | What we built vs proposed |
-| [docs/submission/POST_SPRINT_PLAN.md](./docs/submission/POST_SPRINT_PLAN.md) | Post-sprint development plan |
-| [docs/submission/SOCIAL_UPDATES.md](./docs/submission/SOCIAL_UPDATES.md) | Social update log template |
-| [docs/submission/screenshots/](./docs/submission/screenshots/) | Product screenshots |
-| [docs/architecture.svg](./docs/architecture.svg) | Architecture diagram |
-| [docs/BRAND_KIT.md](./docs/BRAND_KIT.md) | Brand guidelines |
+This starts a fast demo profile for verification and enforcement flows.
 
 ## Features
 
