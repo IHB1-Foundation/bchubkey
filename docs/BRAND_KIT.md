@@ -195,4 +195,4 @@ Brief description paragraph.
 |--------------------|-----------------------------|
 | Logo (SVG)         | `src/assets/logo.svg`       |
 | Brand Kit (this)   | `docs/BRAND_KIT.md`         |
-| Dashboard styles   | `src/admin/templates.ts`    |
+| Dashboard styles   | `frontend/index.html`       |

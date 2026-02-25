@@ -66,7 +66,7 @@ Three key innovations:
 - **BCMR** for token metadata
 - **Telegram Bot API** via Telegraf
 
-Stack: TypeScript, Node.js, Prisma/MySQL
+Stack: TypeScript, Node.js, Prisma/Postgres
 
 ---
 

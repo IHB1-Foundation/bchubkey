@@ -34,7 +34,7 @@ Automatically gate and manage Telegram groups based on BCH CashTokens holdings, 
    npx prisma migrate dev
    ```
 
-Deploying to Railway: see `docs/DEPLOY_RAILWAY.md`.
+Deployment guide (Railway + Vercel + Postgres): see `DEPLOY.md`.
 
 ## Development
 
@@ -67,7 +67,7 @@ src/
 ├── verify/       # Micro-tx verification engine
 ├── gate/         # Token gate evaluation + enforcement
 ├── jobs/         # Scheduled jobs (recheck, grace, cleanup)
-├── admin/        # Optional web dashboard
+├── admin/        # Optional admin JSON API
 └── util/         # Logging, validation, helpers
 ```
 
@@ -95,6 +95,10 @@ Demo mode enables:
 | [DEMO.md](./DEMO.md) | Demo script + failure playbook |
 | [docs/submission/PITCH_DECK.md](./docs/submission/PITCH_DECK.md) | Pitch deck outline |
 | [docs/submission/VIDEO_GUIDE.md](./docs/submission/VIDEO_GUIDE.md) | Video recording guide |
+| [docs/submission/BCH1_FINAL_SUBMISSION_CHECKLIST.md](./docs/submission/BCH1_FINAL_SUBMISSION_CHECKLIST.md) | Final submission checklist |
+| [docs/submission/BUILT_VS_PROPOSED.md](./docs/submission/BUILT_VS_PROPOSED.md) | What we built vs proposed |
+| [docs/submission/POST_SPRINT_PLAN.md](./docs/submission/POST_SPRINT_PLAN.md) | Post-sprint development plan |
+| [docs/submission/SOCIAL_UPDATES.md](./docs/submission/SOCIAL_UPDATES.md) | Social update log template |
 | [docs/submission/screenshots/](./docs/submission/screenshots/) | Product screenshots |
 | [docs/architecture.svg](./docs/architecture.svg) | Architecture diagram |
 | [docs/BRAND_KIT.md](./docs/BRAND_KIT.md) | Brand guidelines |

@@ -18,9 +18,8 @@ This directory should contain product screenshots for the hackathon submission.
 
 ### 3. `dashboard-overview.png`
 **Admin dashboard group detail page**
-- Show the overview with stats, chart, and member table
-- Enable dark mode for visual appeal
-- Capture at http://localhost:3000 during demo
+- Show the overview with stats and group/member data
+- Capture from the Vercel frontend URL (or local static FE) connected to Railway API
 
 ### 4. `gate-result.png` (optional)
 **Gate check result message**
@@ -37,8 +36,8 @@ This directory should contain product screenshots for the hackathon submission.
 2. Open Telegram and interact with your bot
 
 3. For dashboard screenshots:
-   - Open http://localhost:3000
-   - Toggle dark mode for better visuals
+   - Open deployed FE URL (Vercel) or local FE static host
+   - Ensure `API_BASE_URL` points to a live API before capture
    - Use browser DevTools for consistent viewport (1280x800 recommended)
 
 4. Save screenshots as PNG with descriptive names

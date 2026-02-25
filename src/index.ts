@@ -58,8 +58,9 @@ async function main() {
     // Start scheduled jobs (recheck, grace enforcement, cleanup)
     startJobs();
 
-    // Optionally start admin dashboard
-    const adminPort = process.env.ADMIN_PORT ? parseInt(process.env.ADMIN_PORT, 10) : null;
+    // Optionally start admin JSON API (Railway PORT fallback)
+    const adminPortRaw = process.env.ADMIN_PORT ?? process.env.PORT;
+    const adminPort = adminPortRaw ? parseInt(adminPortRaw, 10) : null;
     if (adminPort) {
       await startDashboard(adminPort);
     }
