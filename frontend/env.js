@@ -4,5 +4,5 @@ window.__ENV__ = {
   WEB_ORIGIN_PRIMARY: 'https://bchubkey.com',
   WEB_ORIGIN_WWW: 'https://www.bchubkey.com',
   API_BASE_URL: 'https://api.bchubkey.com',
-  BOT_USERNAME: 'BCHubKeyBot',
+  BOT_USERNAME: 'BCHubkeyBot',
 };
