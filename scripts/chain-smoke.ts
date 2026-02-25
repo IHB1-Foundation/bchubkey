@@ -12,7 +12,7 @@ import { createFulcrumAdapter } from '../src/chain/fulcrum.js';
 
 // Testnet defaults (override via env vars if needed)
 const TEST_ADDRESS =
-  process.env.CHAIN_SMOKE_ADDRESS ?? 'bchtest:qp3wjpa3tjlj042z2wv7hahsldgwhwy0rq9sywjpyy';
+  process.env.CHAIN_SMOKE_ADDRESS ?? 'bchtest:qqqpzg3ng32kvaugnx4thnxaamlsqyfzxvr4audyf9';
 const TEST_TXID = process.env.CHAIN_SMOKE_TXID;
 
 async function main() {

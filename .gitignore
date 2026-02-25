@@ -33,3 +33,4 @@ logs/
 /docs/
 /*.md
 !/README.md
+/SCENARIO.md
