@@ -4,128 +4,480 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BCHubKey Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet"
+  >
   <style>
     :root {
-      --color-primary: #1a1a2e;
-      --color-accent: #8be9fd;
-      --color-bg: #f5f5f5;
-      --color-card: #ffffff;
-      --color-text: #333;
-      --color-muted: #999;
-      --color-border: #eee;
-      --color-pass: #155724;
-      --color-pass-bg: #d4edda;
-      --color-fail: #721c24;
-      --color-fail-bg: #f8d7da;
-      --color-pending: #856404;
-      --color-pending-bg: #fff3cd;
-      --radius: 8px;
-      --shadow: 0 2px 4px rgba(0,0,0,0.1);
+      --color-primary: #0e5f59;
+      --color-primary-strong: #084843;
+      --color-accent: #d0862e;
+      --color-bg: #f2ece3;
+      --color-bg-soft: #e6edf4;
+      --color-card: rgba(255, 255, 255, 0.76);
+      --color-card-solid: #ffffff;
+      --color-text: #182433;
+      --color-muted: #576476;
+      --color-border: rgba(24, 36, 51, 0.12);
+      --color-pass: #1d7f53;
+      --color-pass-bg: #ddf7e8;
+      --color-fail: #b23c3c;
+      --color-fail-bg: #fce2df;
+      --color-pending: #946018;
+      --color-pending-bg: #fcedd0;
+      --radius: 18px;
+      --shadow: 0 16px 42px rgba(12, 26, 38, 0.1);
+      --shadow-soft: 0 8px 24px rgba(12, 26, 38, 0.08);
     }
+
     [data-theme="dark"] {
-      --color-primary: #8be9fd;
-      --color-bg: #0d0d14;
-      --color-card: #1a1a2e;
-      --color-text: #e8e8e8;
-      --color-muted: #808080;
-      --color-border: #2a2a4e;
-      --color-pass: #6ee7a0;
-      --color-pass-bg: #1a3d2a;
-      --color-fail: #f07878;
-      --color-fail-bg: #3d1a1a;
-      --color-pending: #ffd96e;
-      --color-pending-bg: #3d3a1a;
-      --shadow: 0 2px 4px rgba(0,0,0,0.3);
+      --color-primary: #63d4c8;
+      --color-primary-strong: #4db7ac;
+      --color-accent: #e9aa52;
+      --color-bg: #0f1a23;
+      --color-bg-soft: #141f2d;
+      --color-card: rgba(18, 29, 40, 0.78);
+      --color-card-solid: #162432;
+      --color-text: #e9f2f9;
+      --color-muted: #9fb1c3;
+      --color-border: rgba(227, 239, 252, 0.12);
+      --color-pass: #74e2aa;
+      --color-pass-bg: #1f4735;
+      --color-fail: #f59898;
+      --color-fail-bg: #4f2424;
+      --color-pending: #f2ca7a;
+      --color-pending-bg: #493d20;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
+      --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.28);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--color-bg);
+      min-height: 100%;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background:
+        radial-gradient(1200px 600px at 120% -10%, rgba(208, 134, 46, 0.22), transparent 60%),
+        radial-gradient(900px 500px at -20% 20%, rgba(14, 95, 89, 0.18), transparent 65%),
+        linear-gradient(140deg, var(--color-bg), var(--color-bg-soft));
       color: var(--color-text);
       line-height: 1.5;
+      position: relative;
+      overflow-x: hidden;
     }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.22;
+      z-index: -1;
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulseDot {
+      0% {
+        box-shadow: 0 0 0 0 rgba(80, 201, 149, 0.38);
+      }
+      75% {
+        box-shadow: 0 0 0 9px rgba(80, 201, 149, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(80, 201, 149, 0);
+      }
+    }
+
     header {
-      background: #1a1a2e;
-      color: #fff;
-      padding: 16px 24px;
+      margin: 20px auto 0;
+      max-width: 1240px;
+      padding: 16px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      background: var(--color-card);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-soft);
+      animation: riseIn 360ms ease-out both;
     }
-    header h1 { font-size: 1.2rem; font-weight: 600; }
-    header h1 span { color: var(--color-accent); }
-    .controls { display: flex; gap: 12px; align-items: center; }
-    .controls button {
-      background: none;
-      border: 1px solid rgba(255,255,255,0.3);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
+
+    .brand h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
+    }
+
+    .brand h1 span {
+      color: var(--color-accent);
+    }
+
+    .brand p {
+      color: var(--color-muted);
       font-size: 0.85rem;
+      letter-spacing: 0.01em;
     }
-    .controls button:hover { border-color: var(--color-accent); }
-    .user-info { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
-    main { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .controls button {
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      background: var(--color-card-solid);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .controls button:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+      background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card-solid));
+    }
+
+    .user-info {
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 18px auto 42px;
+      padding: 0 18px;
+      animation: riseIn 420ms ease-out both;
+    }
+
     .card {
       background: var(--color-card);
       border-radius: var(--radius);
+      border: 1px solid var(--color-border);
       box-shadow: var(--shadow);
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 22px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(6px);
+      animation: riseIn 420ms ease-out both;
     }
-    .card h2 { font-size: 1.1rem; margin-bottom: 12px; }
-    .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    .card h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.08rem;
+      margin-bottom: 14px;
+      letter-spacing: 0.01em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
     .stat-box {
       background: var(--color-card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px 24px;
-      text-align: center;
-      min-width: 140px;
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-soft);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
     }
-    .stat-box .value { font-size: 1.8rem; font-weight: 700; }
-    .stat-box .label { font-size: 0.8rem; color: var(--color-muted); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
-    th { font-weight: 600; font-size: 0.85rem; color: var(--color-muted); }
-    td { font-size: 0.9rem; }
+
+    .stat-box::after {
+      content: '';
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      right: -40px;
+      bottom: -65px;
+      background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 70%);
+      pointer-events: none;
+    }
+
+    .stat-box .value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .stat-box .label {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    #groups-table,
+    #detail-content {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    th {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-muted);
+      background: color-mix(in srgb, var(--color-bg-soft) 40%, transparent);
+    }
+
+    td {
+      font-size: 0.9rem;
+    }
+
+    tr:hover td {
+      background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    }
+
     .badge {
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-pass {
+      background: var(--color-pass-bg);
+      color: var(--color-pass);
+    }
+
+    .badge-fail {
+      background: var(--color-fail-bg);
+      color: var(--color-fail);
+    }
+
+    .badge-pending {
+      background: var(--color-pending-bg);
+      color: var(--color-pending);
+    }
+
+    .health {
+      font-size: 0.76rem;
+      color: var(--color-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      background: var(--color-card-solid);
+    }
+
+    .health .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 2px;
+      background: #9aa6b7;
+    }
+
+    .health .dot.ok {
+      background: #50c995;
+      animation: pulseDot 1.8s infinite;
+    }
+
+    .health .dot.err {
+      background: #ea6666;
+      animation: none;
+    }
+
+    .error-msg {
+      color: var(--color-fail);
+      padding: 14px;
+      text-align: center;
+      border-radius: 12px;
+      background: var(--color-fail-bg);
+      border: 1px solid color-mix(in srgb, var(--color-fail) 26%, transparent);
+    }
+
+    .loading {
+      color: var(--color-muted);
+      padding: 18px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
       font-weight: 600;
     }
-    .badge-pass { background: var(--color-pass-bg); color: var(--color-pass); }
-    .badge-fail { background: var(--color-fail-bg); color: var(--color-fail); }
-    .badge-pending { background: var(--color-pending-bg); color: var(--color-pending); }
-    .health { font-size: 0.8rem; color: var(--color-muted); }
-    .health .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
-    .health .dot.ok { background: #28a745; }
-    .health .dot.err { background: #dc3545; }
-    .error-msg { color: var(--color-fail); padding: 20px; text-align: center; }
-    .loading { color: var(--color-muted); padding: 20px; text-align: center; }
-    a { color: var(--color-primary); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .mono { font-family: 'SF Mono', Consolas, monospace; font-size: 0.85rem; }
-    #detail-view { display: none; }
+
+    a:hover {
+      color: var(--color-primary-strong);
+      text-decoration: underline;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
+    }
+
+    #detail-view {
+      display: none;
+    }
+
+    #detail-view > p {
+      margin-bottom: 10px;
+    }
+
     /* Login view */
     #login-view {
       display: none;
-      text-align: center;
-      padding: 80px 24px;
+      place-items: center;
+      padding: 70px 20px;
     }
-    #login-view h2 { font-size: 1.5rem; margin-bottom: 16px; }
-    #login-view p { color: var(--color-muted); margin-bottom: 32px; }
-    #telegram-login { display: inline-block; }
+
+    .login-panel {
+      width: min(560px, 100%);
+      border: 1px solid var(--color-border);
+      border-radius: 24px;
+      background: var(--color-card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      padding: 32px 26px;
+      text-align: center;
+      animation: riseIn 450ms ease-out both;
+    }
+
+    #login-view h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.52rem;
+      margin-bottom: 10px;
+    }
+
+    #login-view p {
+      color: var(--color-muted);
+      margin-bottom: 18px;
+    }
+
+    #telegram-login {
+      display: inline-block;
+      margin-top: 12px;
+    }
+
+    #no-auth-msg {
+      display: none;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-border);
+    }
+
     /* Dashboard views (hidden until authed) */
-    #dashboard { display: none; }
+    #dashboard {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      header {
+        margin: 12px 12px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .controls button {
+        padding: 8px 12px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      main {
+        padding: 0 12px;
+        margin-top: 12px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .stat-box .value {
+        font-size: 1.45rem;
+      }
+
+      #login-view {
+        padding: 42px 12px;
+      }
+
+      .login-panel {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1><span>BCHubKey</span> Admin</h1>
+    <div class="brand">
+      <h1><span>BCHubKey</span> Control Deck</h1>
+      <p>Token-gated Telegram operations</p>
+    </div>
     <div class="controls">
       <div class="health" id="health">
         <span class="dot"></span>
@@ -140,13 +492,15 @@
 
   <!-- Login view -->
   <div id="login-view">
-    <h2>Admin Dashboard</h2>
-    <p>Sign in with your Telegram account to access the dashboard.</p>
-    <div id="telegram-login"></div>
-    <p id="login-error" class="error-msg" style="display:none"></p>
-    <p id="no-auth-msg" style="display:none; color: var(--color-muted); margin-top: 16px;">
-      Authentication is not enabled. <a href="#" onclick="enterNoAuth(); return false;">Continue without login</a>
-    </p>
+    <div class="login-panel">
+      <h2>Admin Access</h2>
+      <p>Sign in with Telegram to view groups, policy state, and enforcement logs.</p>
+      <div id="telegram-login"></div>
+      <p id="login-error" class="error-msg" style="display:none"></p>
+      <p id="no-auth-msg">
+        Authentication is not enabled. <a href="#" onclick="enterNoAuth(); return false;">Continue without login</a>
+      </p>
+    </div>
   </div>
 
   <!-- Dashboard (shown after auth) -->
@@ -241,7 +595,7 @@
     }
 
     function showLoginView() {
-      document.getElementById('login-view').style.display = 'block';
+      document.getElementById('login-view').style.display = 'grid';
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('logout-btn').style.display = 'none';
       document.getElementById('user-info').textContent = '';
@@ -326,7 +680,8 @@
       try {
         const h = await fetchApi('/api/health');
         dot.className = 'dot ok';
-        text.textContent = `OK (${h.uptime}s)${h.demoMode ? ' DEMO' : ''}`;
+        const dbPart = h.db === 'ok' ? `DB ${h.dbLatencyMs ?? '-'}ms` : 'DB N/A';
+        text.textContent = `OK ${dbPart}${h.demoMode ? ' DEMO' : ''}`;
         authEnabled = h.authEnabled;
       } catch {
         dot.className = 'dot err';
