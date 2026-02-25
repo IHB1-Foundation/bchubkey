@@ -35,9 +35,10 @@ async function checkDatabaseHealth(): Promise<{ ok: boolean; latencyMs?: number 
 // ── CORS ───────────────────────────────────────────────────────
 
 function getAllowedCorsOrigins(): Set<string> {
+  const allowed = new Set<string>(DEFAULT_ADMIN_CORS_ORIGINS);
   const configured = process.env.ADMIN_CORS_ORIGIN?.trim();
   if (!configured) {
-    return new Set(DEFAULT_ADMIN_CORS_ORIGINS);
+    return allowed;
   }
 
   const origins = configured
@@ -45,7 +46,10 @@ function getAllowedCorsOrigins(): Set<string> {
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0);
 
-  return origins.length > 0 ? new Set(origins) : new Set(DEFAULT_ADMIN_CORS_ORIGINS);
+  for (const origin of origins) {
+    allowed.add(origin);
+  }
+  return allowed;
 }
 
 function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse): void {
