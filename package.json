@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "start:railway": "prisma migrate deploy && node dist/index.js",
-    "build": "tsc",
+    "start:railway": "npm run db:generate && prisma migrate deploy && node dist/index.js",
+    "build": "npm run db:generate && tsc",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -25,22 +25,22 @@
   },
   "dependencies": {
     "@bitauth/libauth": "^3.0.0",
+    "@prisma/client": "^6.19.2",
     "@types/qrcode": "^1.5.6",
     "dotenv": "^16.4.5",
     "pino": "^9.0.0",
     "pino-pretty": "^11.0.0",
+    "prisma": "^6.19.2",
     "qrcode": "^1.5.4",
     "telegraf": "^4.16.3",
     "ws": "^8.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@prisma/client": "^6.19.2",
     "@types/node": "^20.11.0",
     "@types/ws": "^8.18.1",
     "eslint": "^9.0.0",
     "prettier": "^3.2.0",
-    "prisma": "^6.19.2",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.0.0"
