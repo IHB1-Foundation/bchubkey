@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { logger, isDemoMode } from './util/logger.js';
 import { validateStartupConfig } from './util/config.js';
-import { startBot } from './bot/index.js';
+import { startBot, stopBot } from './bot/index.js';
 import { disconnectPrisma } from './db/client.js';
 import {
   initChainAdapter,
@@ -13,11 +13,32 @@ import { startJobs, stopJobs } from './jobs/index.js';
 import { startDashboard, stopDashboard } from './admin/index.js';
 
 async function main() {
+  // Optionally start admin JSON API (Railway PORT fallback)
+  const adminPortRaw = process.env.ADMIN_PORT ?? process.env.PORT;
+  const adminPort = adminPortRaw ? parseInt(adminPortRaw, 10) : null;
+
   // Validate configuration before anything else
   const configResult = validateStartupConfig();
   if (!configResult.valid) {
-    logger.fatal({ errors: configResult.errors }, 'Invalid configuration — aborting startup');
-    process.exit(1);
+    // Keep API service available when only bot token is missing.
+    // This allows /api/health and admin endpoints to stay reachable during setup.
+    const nonFatalErrors: string[] =
+      adminPort !== null
+        ? configResult.errors.filter((e) => e === 'TELEGRAM_BOT_TOKEN is required')
+        : [];
+    const fatalErrors = configResult.errors.filter((e) => !nonFatalErrors.includes(e));
+
+    if (fatalErrors.length > 0) {
+      logger.fatal({ errors: fatalErrors }, 'Invalid configuration — aborting startup');
+      process.exit(1);
+    }
+
+    if (nonFatalErrors.length > 0) {
+      logger.warn(
+        { errors: nonFatalErrors },
+        'Continuing startup in degraded mode (admin API only)'
+      );
+    }
   }
   // Prominent demo mode indicator at startup
   if (isDemoMode()) {
@@ -46,23 +67,38 @@ async function main() {
       maxRetries: parseInt(process.env.METADATA_MAX_RETRIES ?? '2', 10),
     });
 
-    // Initialize chain adapter
-    await initChainAdapter();
-
-    // Start the Telegram bot
-    await startBot();
-
-    // Start the verification polling worker
-    startVerifyWorker();
-
-    // Start scheduled jobs (recheck, grace enforcement, cleanup)
-    startJobs();
-
-    // Optionally start admin JSON API (Railway PORT fallback)
-    const adminPortRaw = process.env.ADMIN_PORT ?? process.env.PORT;
-    const adminPort = adminPortRaw ? parseInt(adminPortRaw, 10) : null;
     if (adminPort) {
       await startDashboard(adminPort);
+    }
+
+    let chainReady = false;
+
+    // Initialize chain adapter (degraded mode on failure)
+    try {
+      await initChainAdapter();
+      chainReady = true;
+    } catch (error) {
+      logger.error({ error }, 'Chain adapter init failed; API will stay up in degraded mode');
+    }
+
+    // Start the Telegram bot in background.
+    // Keep API and jobs available even if Telegram long-polling is delayed.
+    startBot()
+      .then(() => {
+        logger.info('Bot launch completed');
+      })
+      .catch((error) => {
+        logger.error({ error }, 'Bot launch failed; API will stay up in degraded mode');
+      });
+
+    if (chainReady) {
+      // Start the verification polling worker
+      startVerifyWorker();
+
+      // Start scheduled jobs (recheck, grace enforcement, cleanup)
+      startJobs();
+    } else {
+      logger.warn('Skipping verify worker/jobs because chain adapter is not ready');
     }
 
     logger.info('BCHubKey initialized successfully');
@@ -76,6 +112,7 @@ async function main() {
 async function cleanup() {
   logger.info('Cleaning up resources...');
   try {
+    await stopBot();
     stopJobs();
     stopVerifyWorker();
     await stopDashboard();
