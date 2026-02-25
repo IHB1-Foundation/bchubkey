@@ -54,7 +54,7 @@ async function handleAddressInput(ctx: Context, userId: string, text: string) {
     await ctx.reply(
       `Invalid BCH address.\n\n` +
         `${validation.error ?? 'Please enter a valid cashaddr format address.'}\n\n` +
-        `Example: \`bitcoincash:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf\``,
+        `Example: \`bchtest:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf\``,
       { parse_mode: 'Markdown' }
     );
     return;

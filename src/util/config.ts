@@ -1,6 +1,7 @@
 // Startup configuration validation
 
 import { createChildLogger } from './logger.js';
+import { BCH_DEFAULT_TESTNET_FULCRUM_URL } from './bch-network.js';
 
 const logger = createChildLogger('config');
 
@@ -46,6 +47,12 @@ export function validateStartupConfig(): ConfigValidationResult {
 
   if (provider === 'FULCRUM') {
     const url = process.env.FULCRUM_URL;
+    if (!url) {
+      warnings.push(
+        `FULCRUM_URL not set; using default testnet endpoint (${BCH_DEFAULT_TESTNET_FULCRUM_URL})`
+      );
+    }
+
     if (url && !url.startsWith('wss://') && !url.startsWith('ws://') && !url.startsWith('tcp://')) {
       warnings.push(
         `FULCRUM_URL "${url}" has unexpected protocol; expected wss://, ws://, or tcp://`

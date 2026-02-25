@@ -37,7 +37,7 @@ export async function handleStart(ctx: Context) {
       .blank()
       .field('Group', escapeMarkdown(existingFlow.groupTitle))
       .blank()
-      .text('Please send your BCH address (cashaddr format) to continue.')
+      .text('Please send your BCH testnet address (cashaddr format) to continue.')
       .blank()
       .note('Type /cancel to stop.')
       .build();
@@ -199,14 +199,14 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
     .section('Gate Requirements', gateRequirements)
     .blank()
     .section('Verification Process', [
-      'Submit your BCH address',
+      'Submit your BCH testnet address',
       `Prove ownership (send ${rule.verifyMinSat}-${rule.verifyMaxSat} sats)`,
       'Gate Check runs automatically',
     ])
     .blank()
-    .action('Send your BCH address now (cashaddr format).')
+    .action('Send your BCH testnet address now (cashaddr format).')
     .blank()
-    .code('bitcoincash:qz...')
+    .code('bchtest:qz...')
     .build();
 
   // If token has an icon URL, try to send it as a photo with the summary as caption

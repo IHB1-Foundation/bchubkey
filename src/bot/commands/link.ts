@@ -33,13 +33,13 @@ export async function handleLink(ctx: Context) {
         address: undefined,
         sessionId: undefined,
       });
-      await ctx.reply('Please send your new BCH address (cashaddr format).');
+      await ctx.reply('Please send your new BCH testnet address (cashaddr format).');
       return;
     }
 
     await ctx.reply(
       `Usage:\n` +
-        `• \`/link bitcoincash:q...\` to change address\n` +
+        `• \`/link bchtest:q...\` to change address\n` +
         `• or use \`/verify\` to restart flow from group context`,
       { parse_mode: 'Markdown' }
     );

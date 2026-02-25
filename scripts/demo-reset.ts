@@ -118,7 +118,7 @@ async function seedSampleData(): Promise<void> {
       recheckIntervalSec: 60,
       gracePeriodSec: 30,
       actionOnFail: 'RESTRICT',
-      verifyAddress: 'bitcoincash:qz2708...',
+      verifyAddress: 'bchtest:qz2708...',
       verifyMinSat: 2000,
       verifyMaxSat: 2999,
       verifyExpireMin: 5,

@@ -208,9 +208,9 @@ async function handleChangeAddress(ctx: Context, userId: string) {
   const msg = new MessageBuilder()
     .title('Change Address')
     .blank()
-    .text('Please send your new BCH address (cashaddr format).')
+    .text('Please send your new BCH testnet address (cashaddr format).')
     .blank()
-    .code('bitcoincash:qz...')
+    .code('bchtest:qz...')
     .build();
 
   await ctx.editMessageText(msg, { parse_mode: 'Markdown' });
@@ -409,9 +409,9 @@ async function handleStartOver(
       .blank()
       .field('Group', state.groupTitle)
       .blank()
-      .text('Please send your BCH address (cashaddr format) to begin verification.')
+      .text('Please send your BCH testnet address (cashaddr format) to begin verification.')
       .blank()
-      .code('bitcoincash:qz...')
+      .code('bchtest:qz...')
       .build();
 
     await ctx.editMessageText(msg, { parse_mode: 'Markdown' });

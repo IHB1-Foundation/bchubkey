@@ -35,7 +35,7 @@ export async function handleVerifyCommand(ctx: Context) {
 
     await ctx.reply(
       `Verification restarted for *${escapeMarkdown(currentFlow.groupTitle)}*.\n\n` +
-        `Please send your BCH address (cashaddr format).`,
+        `Please send your BCH testnet address (cashaddr format).`,
       { parse_mode: 'Markdown' }
     );
     return;
@@ -134,7 +134,7 @@ export async function handleVerifyCommand(ctx: Context) {
 
   await ctx.reply(
     `Starting verification for *${escapeMarkdown(latestMembership.group.title)}*.\n\n` +
-      `Please send your BCH address (cashaddr format).`,
+      `Please send your BCH testnet address (cashaddr format).`,
     { parse_mode: 'Markdown' }
   );
 }

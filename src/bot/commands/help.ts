@@ -16,7 +16,7 @@ const USER_HELP = `
 
 *How It Works:*
 1. Click the verification link from a group
-2. Submit your BCH address (cashaddr)
+2. Submit your BCH testnet address (cashaddr)
 3. Complete Ownership Proof (micro-transaction)
 4. Gate Check runs automatically
 5. Access granted if you hold required tokens

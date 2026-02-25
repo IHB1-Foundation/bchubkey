@@ -1,5 +1,9 @@
 import QRCode from 'qrcode';
 import { createChildLogger } from './logger.js';
+import {
+  BCH_MAINNET_CASHADDR_PREFIX,
+  BCH_TESTNET_CASHADDR_PREFIX,
+} from './bch-network.js';
 
 const logger = createChildLogger('util:qr');
 
@@ -28,20 +32,20 @@ export async function generateQRCodeBuffer(data: string): Promise<Buffer | null>
 
 /**
  * Generate a BIP21-style BCH payment URI for QR code.
- * Format: bitcoincash:<address>?amount=<bch_amount>
+ * Format: bchtest:<address>?amount=<bch_amount>
  */
 export function generatePaymentURI(address: string, amountSats: number): string {
   // Convert sats to BCH (8 decimals)
   const amountBCH = amountSats / 100_000_000;
 
-  // Normalize address (remove prefix if already has one, then add it)
+  // Normalize address (remove prefix if already has one, then add testnet prefix)
   let cleanAddress = address;
-  if (address.startsWith('bitcoincash:')) {
-    cleanAddress = address.slice('bitcoincash:'.length);
-  } else if (address.startsWith('bchtest:')) {
-    // Testnet address - return as-is for testnet
-    return `${address}?amount=${amountBCH.toFixed(8)}`;
+  if (address.startsWith(`${BCH_MAINNET_CASHADDR_PREFIX}:`)) {
+    throw new Error(`Mainnet address is not supported. Use ${BCH_TESTNET_CASHADDR_PREFIX}:`);
+  }
+  if (address.startsWith(`${BCH_TESTNET_CASHADDR_PREFIX}:`)) {
+    cleanAddress = address.slice(`${BCH_TESTNET_CASHADDR_PREFIX}:`.length);
   }
 
-  return `bitcoincash:${cleanAddress}?amount=${amountBCH.toFixed(8)}`;
+  return `${BCH_TESTNET_CASHADDR_PREFIX}:${cleanAddress}?amount=${amountBCH.toFixed(8)}`;
 }

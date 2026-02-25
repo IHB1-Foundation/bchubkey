@@ -4,6 +4,8 @@
 
 Automatically gate and manage Telegram groups based on BCH CashTokens holdings, with ownership proof and automatic enforcement.
 
+`Network policy:` BCH testnet only (`bchtest:` addresses + testnet Fulcrum).
+
 ## Requirements
 
 - Node.js 20+

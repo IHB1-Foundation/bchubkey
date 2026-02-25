@@ -1,5 +1,9 @@
 import { decodeCashAddress, CashAddressType, encodeCashAddress } from '@bitauth/libauth';
 import type { AddressType } from '../generated/prisma/client.js';
+import {
+  BCH_MAINNET_CASHADDR_PREFIX,
+  BCH_TESTNET_CASHADDR_PREFIX,
+} from './bch-network.js';
 
 export interface CashAddrValidationResult {
   valid: boolean;
@@ -14,8 +18,15 @@ export function validateCashAddress(input: string): CashAddrValidationResult {
   // Add prefix if missing
   let addressWithPrefix = trimmed;
   if (!trimmed.includes(':')) {
-    // Assume mainnet if no prefix
-    addressWithPrefix = `bitcoincash:${trimmed}`;
+    addressWithPrefix = `${BCH_TESTNET_CASHADDR_PREFIX}:${trimmed}`;
+  }
+
+  const providedPrefix = addressWithPrefix.split(':')[0]?.toLowerCase();
+  if (providedPrefix !== BCH_TESTNET_CASHADDR_PREFIX) {
+    return {
+      valid: false,
+      error: `Only BCH testnet addresses are supported (${BCH_TESTNET_CASHADDR_PREFIX}:)`,
+    };
   }
 
   try {
@@ -37,9 +48,16 @@ export function validateCashAddress(input: string): CashAddrValidationResult {
       addressType = 'P2SH';
     }
 
+    if (decoded.prefix !== BCH_TESTNET_CASHADDR_PREFIX) {
+      return {
+        valid: false,
+        error: `Only BCH testnet addresses are supported (${BCH_TESTNET_CASHADDR_PREFIX}:)`,
+      };
+    }
+
     // Re-encode to normalize (ensures correct prefix and checksum)
     const normalized = encodeCashAddress({
-      prefix: decoded.prefix,
+      prefix: BCH_TESTNET_CASHADDR_PREFIX,
       type: decoded.type,
       payload: decoded.payload,
     });
@@ -54,7 +72,7 @@ export function validateCashAddress(input: string): CashAddrValidationResult {
 
     return {
       valid: true,
-      address: `${decoded.prefix}:${normalized}`,
+      address: `${BCH_TESTNET_CASHADDR_PREFIX}:${normalized}`,
       type: addressType,
     };
   } catch (error) {
@@ -66,11 +84,11 @@ export function validateCashAddress(input: string): CashAddrValidationResult {
 }
 
 export function isMainnetAddress(address: string): boolean {
-  return address.startsWith('bitcoincash:');
+  return address.startsWith(`${BCH_MAINNET_CASHADDR_PREFIX}:`);
 }
 
 export function isTestnetAddress(address: string): boolean {
-  return address.startsWith('bchtest:');
+  return address.startsWith(`${BCH_TESTNET_CASHADDR_PREFIX}:`);
 }
 
 export function shortenAddress(address: string, chars = 8): string {

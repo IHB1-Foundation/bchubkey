@@ -9,6 +9,7 @@ import { prisma } from '../db/client.js';
 import { getChainAdapter } from '../chain/index.js';
 import { createChildLogger, logDemoError } from '../util/logger.js';
 import { processGateCheck } from '../gate/index.js';
+import { BCH_TESTNET_CASHADDR_PREFIX } from '../util/bch-network.js';
 import type { VerifySession } from '../generated/prisma/client.js';
 
 const logger = createChildLogger('verify:worker');
@@ -118,7 +119,7 @@ async function runVerificationCycle(): Promise<void> {
           logger,
           error,
           `Failed to process address sessions for ${verifyAddress}`,
-          'Chain adapter may be offline. Try: 1) Check FULCRUM_URL, 2) Verify the address is valid BCH, 3) Restart'
+          'Chain adapter may be offline. Try: 1) Check FULCRUM_URL, 2) Verify the address is valid BCH testnet, 3) Restart'
         );
       }
     }
@@ -357,9 +358,9 @@ function normalizeAddress(address: string): string {
   // Lowercase and ensure prefix
   let normalized = address.toLowerCase();
 
-  // Add bitcoincash: prefix if missing
+  // Add testnet prefix if missing
   if (!normalized.includes(':')) {
-    normalized = `bitcoincash:${normalized}`;
+    normalized = `${BCH_TESTNET_CASHADDR_PREFIX}:${normalized}`;
   }
 
   return normalized;

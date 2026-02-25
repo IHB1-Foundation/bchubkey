@@ -39,7 +39,7 @@ async function main() {
         decimals: 8,
         recheckIntervalSec: 60,
         gracePeriodSec: 120,
-        verifyAddress: 'bitcoincash:qz...',
+        verifyAddress: 'bchtest:qz...',
       },
     });
     console.log('   Created:', gateRule);
@@ -61,7 +61,7 @@ async function main() {
     const address = await prisma.userAddress.create({
       data: {
         tgUserId: testUserId,
-        address: 'bitcoincash:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf',
+        address: 'bchtest:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf',
         addressType: 'P2PKH',
         verified: true,
         verifiedAt: new Date(),
@@ -75,9 +75,9 @@ async function main() {
       data: {
         tgUserId: testUserId,
         groupId: testGroupId,
-        address: 'bitcoincash:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf',
+        address: 'bchtest:qz2jx5sxxt4wy3z6dycknpk55tcy54jqhcw4u52gxf',
         amountSat: 2345,
-        verificationAddress: 'bitcoincash:qz...',
+        verificationAddress: 'bchtest:qz...',
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         status: 'PENDING',
       },

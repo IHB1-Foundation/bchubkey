@@ -5,6 +5,7 @@ import { getWizardState, updateWizardState, updateWizardData, deleteWizardState 
 import { saveGroupConfig } from './save.js';
 import type { GateType, GroupMode, ActionOnFail } from '../../generated/prisma/client.js';
 import { fetchTokenMetadata, formatTokenMetadataDisplay } from '../../chain/index.js';
+import { validateCashAddress } from '../../util/cashaddr.js';
 
 const logger = createChildLogger('bot:wizard:handlers');
 
@@ -89,7 +90,7 @@ async function handleActionSelection(ctx: Context, userId: string, actionOnFail:
   await ctx.editMessageText(
     `*Step 7: Verification Address*\n\n` +
       `Enter the BCH address where users will send micro-transactions for ownership proof.\n\n` +
-      `This should be a cashaddr format address (starting with bitcoincash:).\n` +
+      `This should be a cashaddr format testnet address (starting with bchtest:).\n` +
       `You control this address - it receives tiny amounts for verification.`,
     { parse_mode: 'Markdown' }
   );
@@ -397,19 +398,18 @@ async function handleGracePeriodInput(ctx: Context, userId: string, text: string
 }
 
 async function handleVerifyAddressInput(ctx: Context, userId: string, text: string) {
-  const address = text.trim();
-
-  // Basic cashaddr validation
-  if (!address.startsWith('bitcoincash:') && !address.startsWith('bchtest:')) {
+  const validation = validateCashAddress(text);
+  if (!validation.valid || !validation.address) {
     await ctx.reply(
-      'Invalid address format. Please enter a cashaddr format address.\n\n' +
-        'Example: `bitcoincash:qz...`',
+      'Invalid address format. Please enter a BCH testnet cashaddr.\n\n' +
+        `${validation.error ?? 'Address must start with bchtest:'}\n\n` +
+        'Example: `bchtest:qz...`',
       { parse_mode: 'Markdown' }
     );
     return;
   }
 
-  updateWizardData(userId, { verifyAddress: address });
+  updateWizardData(userId, { verifyAddress: validation.address });
   updateWizardState(userId, { step: 'VERIFY_AMOUNT_RANGE' });
 
   await ctx.reply(

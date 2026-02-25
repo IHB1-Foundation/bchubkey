@@ -16,6 +16,11 @@ import {
   binToHex,
 } from '@bitauth/libauth';
 import { createChildLogger, logDemoError } from '../util/logger.js';
+import {
+  BCH_DEFAULT_TESTNET_FULCRUM_URL,
+  BCH_TESTNET_CASHADDR_PREFIX,
+  BCH_TESTNET_GENESIS_HASH,
+} from '../util/bch-network.js';
 import { TTLCache } from './cache.js';
 import type {
   ChainAdapter,
@@ -40,6 +45,10 @@ interface RpcResponse {
   id: number;
   result?: unknown;
   error?: { code: number; message: string };
+}
+
+interface ServerFeatures {
+  genesis_hash?: string;
 }
 
 // Fulcrum UTXO response structure
@@ -67,6 +76,7 @@ export class FulcrumAdapter implements ChainAdapter {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private reconnectDisabled = false;
 
   private readonly config: ChainConfig;
 
@@ -102,11 +112,25 @@ export class FulcrumAdapter implements ChainAdapter {
 
       this.ws.on('open', () => {
         clearTimeout(connectionTimeout);
-        this.connected = true;
-        this.connecting = false;
-        this.reconnectAttempts = 0;
-        logger.info('Connected to Fulcrum');
-        resolve();
+
+        void (async () => {
+          try {
+            await this.verifyTestnetNetwork();
+            this.connected = true;
+            this.connecting = false;
+            this.reconnectDisabled = false;
+            this.reconnectAttempts = 0;
+            logger.info('Connected to Fulcrum (testnet verified)');
+            resolve();
+          } catch (error) {
+            this.connecting = false;
+            this.reconnectDisabled = true;
+            this.ws?.close();
+            reject(
+              error instanceof Error ? error : new Error('Failed to verify Fulcrum network')
+            );
+          }
+        })();
       });
 
       this.ws.on('message', (data: Buffer) => {
@@ -118,7 +142,7 @@ export class FulcrumAdapter implements ChainAdapter {
           logger,
           error,
           'WebSocket connection error',
-          'Check Fulcrum server. Try: 1) Verify FULCRUM_URL in .env, 2) Try alternate server: wss://electroncash.de:60002, 3) Check network connection'
+          'Check Fulcrum testnet server. Try: 1) Verify FULCRUM_URL in .env, 2) Try alternate server: wss://blackie.c3-soft.com:60004, 3) Check network connection'
         );
         if (this.connecting) {
           clearTimeout(connectionTimeout);
@@ -138,12 +162,17 @@ export class FulcrumAdapter implements ChainAdapter {
   }
 
   private attemptReconnect(): void {
+    if (this.reconnectDisabled) {
+      logger.error('Reconnection disabled due to failed testnet verification');
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       logDemoError(
         logger,
         new Error('Max reconnection attempts reached'),
         'Chain adapter connection failed permanently',
-        'Fulcrum server unreachable. Try: 1) Restart the app, 2) Change FULCRUM_URL in .env, 3) Check https://status.imaginary.cash/'
+        'Fulcrum server unreachable. Try: 1) Restart the app, 2) Change FULCRUM_URL in .env to a testnet endpoint, 3) Check provider status'
       );
       return;
     }
@@ -165,6 +194,23 @@ export class FulcrumAdapter implements ChainAdapter {
         );
       }
     }, delay);
+  }
+
+  private async verifyTestnetNetwork(): Promise<void> {
+    const features = await this.callOnce<ServerFeatures>('server.features', []);
+    const genesis = features.genesis_hash?.toLowerCase();
+
+    if (!genesis) {
+      throw new Error(
+        'Unable to verify chain network (server.features missing genesis_hash). Use a BCH testnet Fulcrum endpoint.'
+      );
+    }
+
+    if (genesis !== BCH_TESTNET_GENESIS_HASH) {
+      throw new Error(
+        `Unsupported network: expected BCH testnet genesis ${BCH_TESTNET_GENESIS_HASH}, got ${genesis}`
+      );
+    }
   }
 
   private handleMessage(data: string): void {
@@ -410,7 +456,7 @@ export class FulcrumAdapter implements ChainAdapter {
 
       // Encode as cashaddr
       const result = encodeCashAddress({
-        prefix: 'bitcoincash',
+        prefix: BCH_TESTNET_CASHADDR_PREFIX,
         type: CashAddressType.p2pkh,
         payload: hash160,
       });
@@ -419,7 +465,7 @@ export class FulcrumAdapter implements ChainAdapter {
         return undefined;
       }
 
-      return `bitcoincash:${result}`;
+      return `${BCH_TESTNET_CASHADDR_PREFIX}:${result}`;
     } catch {
       return undefined;
     }
@@ -438,13 +484,13 @@ export class FulcrumAdapter implements ChainAdapter {
     ) {
       const hash160 = scriptPubKey.slice(3, 23);
       const result = encodeCashAddress({
-        prefix: 'bitcoincash',
+        prefix: BCH_TESTNET_CASHADDR_PREFIX,
         type: CashAddressType.p2pkh,
         payload: hash160,
       });
 
       if (typeof result !== 'string') {
-        return `bitcoincash:${result}`;
+        return `${BCH_TESTNET_CASHADDR_PREFIX}:${result}`;
       }
     }
 
@@ -458,13 +504,13 @@ export class FulcrumAdapter implements ChainAdapter {
     ) {
       const hash160 = scriptPubKey.slice(2, 22);
       const result = encodeCashAddress({
-        prefix: 'bitcoincash',
+        prefix: BCH_TESTNET_CASHADDR_PREFIX,
         type: CashAddressType.p2sh,
         payload: hash160,
       });
 
       if (typeof result !== 'string') {
-        return `bitcoincash:${result}`;
+        return `${BCH_TESTNET_CASHADDR_PREFIX}:${result}`;
       }
     }
 
@@ -576,6 +622,9 @@ export class FulcrumAdapter implements ChainAdapter {
     if (typeof decoded === 'string') {
       throw new Error(`Invalid address: ${decoded}`);
     }
+    if (decoded.prefix !== BCH_TESTNET_CASHADDR_PREFIX) {
+      throw new Error(`Only ${BCH_TESTNET_CASHADDR_PREFIX}: addresses are supported`);
+    }
 
     // Build scriptPubKey based on address type
     let scriptPubKey: Uint8Array;
@@ -651,7 +700,7 @@ export class FulcrumAdapter implements ChainAdapter {
 export function createFulcrumAdapter(): FulcrumAdapter {
   const config: ChainConfig = {
     provider: 'FULCRUM',
-    url: process.env.FULCRUM_URL ?? 'wss://bch.imaginary.cash:50004',
+    url: process.env.FULCRUM_URL ?? BCH_DEFAULT_TESTNET_FULCRUM_URL,
     timeout: 30_000, // 30 seconds
     retries: 3,
     cacheTtlMs: 60_000, // 1 minute cache
