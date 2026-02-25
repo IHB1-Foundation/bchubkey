@@ -17,6 +17,7 @@ import type { GroupSummary, GroupDetailResponse, HealthResponse } from './types.
 
 const logger = createChildLogger('admin-api');
 const startTime = Date.now();
+const DEFAULT_ADMIN_CORS_ORIGINS = ['https://bchubkey.com', 'https://www.bchubkey.com'] as const;
 
 let server: http.Server | null = null;
 
@@ -33,22 +34,43 @@ async function checkDatabaseHealth(): Promise<{ ok: boolean; latencyMs?: number 
 
 // ── CORS ───────────────────────────────────────────────────────
 
-function getCorsOrigin(): string | null {
-  return process.env.ADMIN_CORS_ORIGIN || null;
+function getAllowedCorsOrigins(): Set<string> {
+  const configured = process.env.ADMIN_CORS_ORIGIN?.trim();
+  if (!configured) {
+    return new Set(DEFAULT_ADMIN_CORS_ORIGINS);
+  }
+
+  const origins = configured
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  return origins.length > 0 ? new Set(origins) : new Set(DEFAULT_ADMIN_CORS_ORIGINS);
 }
 
-function setCorsHeaders(res: http.ServerResponse): void {
-  const origin = getCorsOrigin();
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse): void {
+  const requestOrigin = req.headers.origin;
+  if (!requestOrigin) {
+    return;
+  }
+
+  const allowedOrigins = getAllowedCorsOrigins();
+  if (allowedOrigins.has(requestOrigin)) {
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
   }
 }
 
-function jsonResponse(res: http.ServerResponse, status: number, data: unknown): void {
-  setCorsHeaders(res);
+function jsonResponse(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  status: number,
+  data: unknown
+): void {
+  setCorsHeaders(req, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.statusCode = status;
   res.end(JSON.stringify(data));
@@ -123,7 +145,7 @@ async function requireAuth(
     }).catch((err) => {
       logger.debug({ err }, 'Failed to persist ADMIN_AUTH_FAIL audit event');
     });
-    jsonResponse(res, 401, { error: 'Authentication required' });
+    jsonResponse(req, res, 401, { error: 'Authentication required' });
     return null;
   }
   return auth;
@@ -379,12 +401,12 @@ async function handleAuthTelegram(
   try {
     data = JSON.parse(body);
   } catch {
-    jsonResponse(res, 400, { error: 'Invalid JSON body' });
+    jsonResponse(req, res, 400, { error: 'Invalid JSON body' });
     return;
   }
 
   if (!data.id || !data.auth_date || !data.hash) {
-    jsonResponse(res, 400, { error: 'Missing required fields: id, auth_date, hash' });
+    jsonResponse(req, res, 400, { error: 'Missing required fields: id, auth_date, hash' });
     return;
   }
 
@@ -398,11 +420,11 @@ async function handleAuthTelegram(
   });
 
   if (!result) {
-    jsonResponse(res, 401, { error: 'Invalid authentication' });
+    jsonResponse(req, res, 401, { error: 'Invalid authentication' });
     return;
   }
 
-  jsonResponse(res, 200, {
+  jsonResponse(req, res, 200, {
     token: result.token,
     user: result.adminUser,
   });
@@ -414,7 +436,7 @@ async function handleAuthRefresh(
 ): Promise<void> {
   const auth = await extractAuth(req);
   if (!auth) {
-    jsonResponse(res, 401, { error: 'Authentication required' });
+    jsonResponse(req, res, 401, { error: 'Authentication required' });
     return;
   }
 
@@ -428,11 +450,11 @@ async function handleAuthRefresh(
   });
 
   if (!result) {
-    jsonResponse(res, 401, { error: 'Session refresh failed' });
+    jsonResponse(req, res, 401, { error: 'Session refresh failed' });
     return;
   }
 
-  jsonResponse(res, 200, { token: result.token });
+  jsonResponse(req, res, 200, { token: result.token });
 }
 
 async function handleAuthLogout(
@@ -441,18 +463,18 @@ async function handleAuthLogout(
 ): Promise<void> {
   const auth = await extractAuth(req);
   if (!auth) {
-    jsonResponse(res, 401, { error: 'Authentication required' });
+    jsonResponse(req, res, 401, { error: 'Authentication required' });
     return;
   }
 
   await revokeSession(auth.sessionId, auth.adminUserId);
-  jsonResponse(res, 200, { ok: true });
+  jsonResponse(req, res, 200, { ok: true });
 }
 
 async function handleAuthMe(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const auth = await extractAuth(req);
   if (!auth) {
-    jsonResponse(res, 401, { error: 'Authentication required' });
+    jsonResponse(req, res, 401, { error: 'Authentication required' });
     return;
   }
 
@@ -469,7 +491,7 @@ async function handleAuthMe(req: http.IncomingMessage, res: http.ServerResponse)
   });
 
   if (!adminUser) {
-    jsonResponse(res, 401, { error: 'Admin user not found' });
+    jsonResponse(req, res, 401, { error: 'Admin user not found' });
     return;
   }
 
@@ -481,7 +503,7 @@ async function handleAuthMe(req: http.IncomingMessage, res: http.ServerResponse)
     },
   });
 
-  jsonResponse(res, 200, {
+  jsonResponse(req, res, 200, {
     user: adminUser,
     groups: groupAdmins.map((ga) => ({
       groupId: ga.group.id,
@@ -499,7 +521,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    setCorsHeaders(res);
+    setCorsHeaders(req, res);
     res.statusCode = 204;
     res.end();
     return;
@@ -521,7 +543,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
           timestamp: new Date().toISOString(),
           authEnabled: isAuthEnabled(),
         };
-        jsonResponse(res, 503, degraded);
+        jsonResponse(req, res, 503, degraded);
         return;
       }
 
@@ -534,7 +556,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
         timestamp: new Date().toISOString(),
         authEnabled: isAuthEnabled(),
       };
-      jsonResponse(res, 200, health);
+      jsonResponse(req, res, 200, health);
       return;
     }
 
@@ -571,7 +593,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
     // GET /api/groups
     if (pathname === '/api/groups' && req.method === 'GET') {
       const groups = await getGroupsList(auth.adminUserId);
-      jsonResponse(res, 200, { groups });
+      jsonResponse(req, res, 200, { groups });
       return;
     }
 
@@ -583,7 +605,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
       // Tenant authorization: check admin has access to this group
       const role = await checkGroupAccess(auth.adminUserId, groupId);
       if (!role) {
-        jsonResponse(res, 403, { error: 'Access denied' });
+        jsonResponse(req, res, 403, { error: 'Access denied' });
         return;
       }
 
@@ -600,18 +622,18 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
 
       const data = await getGroupDetail(groupId, queryParams);
       if (!data) {
-        jsonResponse(res, 404, { error: 'Group not found' });
+        jsonResponse(req, res, 404, { error: 'Group not found' });
         return;
       }
-      jsonResponse(res, 200, data);
+      jsonResponse(req, res, 200, data);
       return;
     }
 
     // 404 for all other routes
-    jsonResponse(res, 404, { error: 'Not found' });
+    jsonResponse(req, res, 404, { error: 'Not found' });
   } catch (error) {
     logger.error({ error, pathname }, 'API request error');
-    jsonResponse(res, 500, { error: 'Internal server error' });
+    jsonResponse(req, res, 500, { error: 'Internal server error' });
   }
 }
 
@@ -628,7 +650,7 @@ export function startDashboard(port: number): Promise<void> {
     server = http.createServer((req, res) => {
       handleRequest(req, res).catch((err) => {
         logger.error({ err }, 'Unhandled API error');
-        jsonResponse(res, 500, { error: 'Internal server error' });
+        jsonResponse(req, res, 500, { error: 'Internal server error' });
       });
     });
 

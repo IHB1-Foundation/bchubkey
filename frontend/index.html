@@ -522,8 +522,9 @@
 
   <script src="/env.js"></script>
   <script>
-    const API_BASE = window.__ENV__?.API_BASE_URL || '';
-    const BOT_USERNAME = window.__ENV__?.BOT_USERNAME || '';
+    const APP_CONFIG = window.__ENV__ || {};
+    const API_BASE = APP_CONFIG.API_BASE_URL || 'https://api.bchubkey.com';
+    const BOT_USERNAME = APP_CONFIG.BOT_USERNAME || '';
 
     // ── Theme ──────────────────────────────────────
     function getTheme() { return localStorage.getItem('theme') || 'light'; }
@@ -612,7 +613,7 @@
         script.setAttribute('data-request-access', 'write');
         container.appendChild(script);
       } else {
-        container.innerHTML = '<p style="color:var(--color-muted)">Bot username not configured. Set BOT_USERNAME in env.js.</p>';
+        container.innerHTML = '<p style="color:var(--color-muted)">Bot username not configured. Set BOT_USERNAME in frontend/env.js.</p>';
       }
     }
 
