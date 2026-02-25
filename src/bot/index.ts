@@ -10,6 +10,12 @@ import { handleExport } from './commands/export.js';
 import { handlePause, handleResume } from './commands/pause.js';
 import { handleBanfail } from './commands/banfail.js';
 import { handleClaim } from './commands/claim.js';
+import { handleStatus } from './commands/status.js';
+import { handlePrivacy } from './commands/privacy.js';
+import { handleLink } from './commands/link.js';
+import { handleVerifyCommand } from './commands/verify.js';
+import { handleRecheck } from './commands/recheck.js';
+import { handleGate } from './commands/gate.js';
 import { handleCallbackQuery } from './callbacks/index.js';
 import { handleWizardTextInput } from './wizard/handlers.js';
 import { handleVerifyTextInput } from '../verify/handlers.js';
@@ -42,6 +48,12 @@ export function createBot(): Telegraf {
   telegraf.command('resume', handleResume);
   telegraf.command('banfail', handleBanfail);
   telegraf.command('claim', handleClaim);
+  telegraf.command('status', handleStatus);
+  telegraf.command('privacy', handlePrivacy);
+  telegraf.command('link', handleLink);
+  telegraf.command('verify', handleVerifyCommand);
+  telegraf.command('recheck', handleRecheck);
+  telegraf.command('gate', handleGate);
 
   // Register callback query handler
   telegraf.on('callback_query', handleCallbackQuery);

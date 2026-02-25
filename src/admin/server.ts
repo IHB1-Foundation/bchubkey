@@ -13,16 +13,23 @@ import {
   type TelegramLoginData,
 } from './auth.js';
 import { logAdminAudit } from './audit.js';
-import type {
-  GroupSummary,
-  GroupDetailResponse,
-  HealthResponse,
-} from './types.js';
+import type { GroupSummary, GroupDetailResponse, HealthResponse } from './types.js';
 
 const logger = createChildLogger('admin-api');
 const startTime = Date.now();
 
 let server: http.Server | null = null;
+
+async function checkDatabaseHealth(): Promise<{ ok: boolean; latencyMs?: number }> {
+  const startedAt = Date.now();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return { ok: true, latencyMs: Date.now() - startedAt };
+  } catch (error) {
+    logger.error({ error }, 'Database health check failed');
+    return { ok: false };
+  }
+}
 
 // ── CORS ───────────────────────────────────────────────────────
 
@@ -76,6 +83,14 @@ interface AuthContext {
   sessionId: string;
 }
 
+const ADMIN_AUDIT_TYPES = [
+  'ADMIN_LOGIN',
+  'ADMIN_LOGOUT',
+  'ADMIN_AUTH_FAIL',
+  'ADMIN_AUTHZ_DENY',
+  'ADMIN_SESSION_REFRESH',
+] as const;
+
 /**
  * Extract and validate auth from request.
  * Returns AuthContext if valid, null otherwise.
@@ -105,7 +120,9 @@ async function requireAuth(
     logAdminAudit({
       type: 'ADMIN_AUTH_FAIL',
       payload: { reason: 'missing_or_invalid_token', path: req.url },
-    }).catch(() => {});
+    }).catch((err) => {
+      logger.debug({ err }, 'Failed to persist ADMIN_AUTH_FAIL audit event');
+    });
     jsonResponse(res, 401, { error: 'Authentication required' });
     return null;
   }
@@ -137,10 +154,7 @@ function sanitizeAuditPayload(payloadJson: string): string {
  * Check if admin has access to a specific group.
  * Returns the GroupAdmin role if authorized, null if denied.
  */
-async function checkGroupAccess(
-  adminUserId: string,
-  groupId: string
-): Promise<string | null> {
+async function checkGroupAccess(adminUserId: string, groupId: string): Promise<string | null> {
   if (!isAuthEnabled() || adminUserId === '__noauth__') return 'OWNER'; // no-auth fallback
 
   const ga = await prisma.groupAdmin.findUnique({
@@ -157,7 +171,9 @@ async function checkGroupAccess(
       adminUserId,
       groupId,
       payload: { reason: 'no_group_admin_record' },
-    }).catch(() => {}); // fire and forget
+    }).catch((err) => {
+      logger.debug({ err }, 'Failed to persist ADMIN_AUTHZ_DENY audit event');
+    }); // fire and forget
     return null;
   }
 
@@ -277,7 +293,12 @@ async function getGroupDetail(
   });
 
   const logs = await prisma.auditLog.findMany({
-    where: { groupId },
+    where: {
+      groupId,
+      type: {
+        notIn: [...ADMIN_AUDIT_TYPES],
+      },
+    },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -367,7 +388,8 @@ async function handleAuthTelegram(
     return;
   }
 
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress;
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress;
   const ua = req.headers['user-agent'];
 
   const result = await authenticateTelegram(data, {
@@ -396,7 +418,8 @@ async function handleAuthRefresh(
     return;
   }
 
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress;
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress;
   const ua = req.headers['user-agent'];
 
   const result = await refreshSession(auth.adminUserId, auth.sessionId, {
@@ -426,10 +449,7 @@ async function handleAuthLogout(
   jsonResponse(res, 200, { ok: true });
 }
 
-async function handleAuthMe(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
+async function handleAuthMe(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const auth = await extractAuth(req);
   if (!auth) {
     jsonResponse(res, 401, { error: 'Authentication required' });
@@ -490,8 +510,25 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
 
     // GET /api/health (always public)
     if (pathname === '/api/health' && req.method === 'GET') {
+      const db = await checkDatabaseHealth();
+
+      if (!db.ok) {
+        const degraded: HealthResponse = {
+          status: 'degraded',
+          db: 'error',
+          uptime: Math.floor((Date.now() - startTime) / 1000),
+          demoMode: isDemoMode(),
+          timestamp: new Date().toISOString(),
+          authEnabled: isAuthEnabled(),
+        };
+        jsonResponse(res, 503, degraded);
+        return;
+      }
+
       const health: HealthResponse = {
         status: 'ok',
+        db: 'ok',
+        dbLatencyMs: db.latencyMs,
         uptime: Math.floor((Date.now() - startTime) / 1000),
         demoMode: isDemoMode(),
         timestamp: new Date().toISOString(),

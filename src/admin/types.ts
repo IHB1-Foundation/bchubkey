@@ -77,7 +77,9 @@ export interface GroupDetailResponse {
 }
 
 export interface HealthResponse {
-  status: 'ok';
+  status: 'ok' | 'degraded';
+  db: 'ok' | 'error';
+  dbLatencyMs?: number;
   uptime: number;
   demoMode: boolean;
   timestamp: string;
