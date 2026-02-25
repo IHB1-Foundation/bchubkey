@@ -3,12 +3,7 @@ import { createChildLogger } from '../../util/logger.js';
 import { prisma } from '../../db/client.js';
 import { createVerifyFlowState, getVerifyFlowState } from '../../verify/state.js';
 import { fetchTokenMetadata, type TokenMetadata } from '../../chain/metadata.js';
-import {
-  MessageBuilder,
-  escapeMarkdown,
-  formatTokenId,
-  Messages,
-} from '../util/messages.js';
+import { MessageBuilder, escapeMarkdown, formatTokenId, Messages } from '../util/messages.js';
 
 const logger = createChildLogger('bot:cmd:start');
 
@@ -221,7 +216,10 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
         caption: summary,
         parse_mode: 'Markdown',
       });
-      logger.info({ userId, groupId, iconUrl: tokenMetadata.iconUrl }, 'Sent verification intro with token icon');
+      logger.info(
+        { userId, groupId, iconUrl: tokenMetadata.iconUrl },
+        'Sent verification intro with token icon'
+      );
     } catch (error) {
       // Icon failed to load, fall back to text only
       logger.warn({ error, iconUrl: tokenMetadata.iconUrl }, 'Token icon failed to load');
@@ -231,7 +229,10 @@ async function handleDeepLinkVerification(ctx: Context, userId: number, payload:
     await ctx.reply(summary, { parse_mode: 'Markdown' });
   }
 
-  logger.info({ userId, groupId, gateType: rule.gateType, hasMetadata: !!tokenMetadata }, 'Verification flow started');
+  logger.info(
+    { userId, groupId, gateType: rule.gateType, hasMetadata: !!tokenMetadata },
+    'Verification flow started'
+  );
 }
 
 function formatThreshold(rule: {
@@ -269,7 +270,12 @@ function formatTokenDisplay(tokenId: string, metadata: TokenMetadata | null): st
 }
 
 function formatThresholdWithSymbol(
-  rule: { gateType: string; minAmountBase: string | null; minNftCount: number | null; decimals: number | null },
+  rule: {
+    gateType: string;
+    minAmountBase: string | null;
+    minNftCount: number | null;
+    decimals: number | null;
+  },
   metadata: TokenMetadata | null
 ): string {
   if (rule.gateType === 'FT') {

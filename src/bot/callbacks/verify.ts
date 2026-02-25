@@ -14,12 +14,7 @@ import {
   formatSessionInstructions,
   formatSessionInstructionsWithQR,
 } from '../../verify/session.js';
-import {
-  MessageBuilder,
-  ButtonLabels,
-  Messages,
-  truncate,
-} from '../util/messages.js';
+import { MessageBuilder, ButtonLabels, Messages, truncate } from '../util/messages.js';
 
 const logger = createChildLogger('bot:callback:verify');
 

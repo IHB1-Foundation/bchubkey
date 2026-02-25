@@ -166,9 +166,9 @@ VALID iff expected_hash === provided hash AND auth_date is within 5 minutes
 |-----------------------|---------|----------|----------|----------------------------------------|
 | `ADMIN_JWT_SECRET`    | Railway | Yes*     | —        | HS256 signing secret for JWTs          |
 | `ADMIN_SESSION_TTL_SEC` | Railway | No     | `86400`  | JWT/session expiry in seconds          |
-| `ADMIN_AUTH_ENABLED`  | Railway | No       | `false`  | Feature flag: `true` to enforce auth   |
+| `ADMIN_AUTH_ENABLED`  | Railway | No       | `true`   | Feature flag: set `false` only for emergency rollback |
 
-\* Required when `ADMIN_AUTH_ENABLED=true`. If auth is disabled (default), endpoints remain open for backward compatibility during rollout.
+\* Required in normal operation (auth enabled by default). If auth is disabled, endpoints remain open only for emergency rollback.
 
 ---
 
@@ -176,8 +176,7 @@ VALID iff expected_hash === provided hash AND auth_date is within 5 minutes
 
 Detailed in T-119. Summary:
 
-1. **Shadow mode** (`ADMIN_AUTH_ENABLED=false`): Auth endpoints available, middleware logs but does not block
-2. **Soft enforcement** (`ADMIN_AUTH_ENABLED=true`): Auth required, but grace period for admin onboarding
-3. **Hard enforcement**: All endpoints require auth, no exceptions
+1. **Hard enforcement (default)** (`ADMIN_AUTH_ENABLED=true`): Auth required on protected endpoints
+2. **Emergency rollback mode** (`ADMIN_AUTH_ENABLED=false`): temporary open mode for incident response only
 
 This allows existing deployments to adopt auth incrementally without breaking the demo flow.

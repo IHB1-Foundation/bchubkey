@@ -513,7 +513,7 @@ export class FulcrumAdapter implements ChainAdapter {
     // Convert cashaddr to scripthash for Electrum protocol
     const scripthash = this.addressToScripthash(address);
 
-    const history = await this.call<Array<{ tx_hash: string; height: number }>>(
+    const history = await this.call<{ tx_hash: string; height: number }[]>(
       'blockchain.scripthash.get_history',
       [scripthash]
     );

@@ -9,7 +9,7 @@
 
 | Env Variable | Values | Default | Description |
 |---|---|---|---|
-| `ADMIN_AUTH_ENABLED` | `true` / `false` | `false` | When `false`, all API endpoints remain open (pre-M11 behavior) |
+| `ADMIN_AUTH_ENABLED` | `true` / `false` | `true` | Keep `true` in normal operation; set `false` only for emergency rollback |
 | `ADMIN_JWT_SECRET` | string (32+ chars) | — | Required when auth is enabled |
 | `ADMIN_SESSION_TTL_SEC` | number | `86400` | Session/JWT expiry in seconds |
 
@@ -17,9 +17,9 @@
 
 ## Rollout Stages
 
-### Stage 1: Shadow Mode (Default)
+### Stage 1: Shadow Mode (Optional, Temporary)
 
-**Config**: `ADMIN_AUTH_ENABLED=false` (or unset)
+**Config**: `ADMIN_AUTH_ENABLED=false`
 
 **Behavior**:
 - Auth endpoints (`/api/auth/*`) are available and functional
@@ -41,7 +41,7 @@
 
 ---
 
-### Stage 2: Soft Enforcement
+### Stage 2: Soft Enforcement / Initial Lock
 
 **Config**: `ADMIN_AUTH_ENABLED=true`, `ADMIN_JWT_SECRET=<secret>`
 
@@ -71,7 +71,7 @@
 
 ---
 
-### Stage 3: Hard Enforcement (Production)
+### Stage 3: Hard Enforcement (Production Default)
 
 **Config**: Same as Stage 2. No additional config changes.
 

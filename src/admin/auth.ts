@@ -20,7 +20,8 @@ function getSessionTtlSec(): number {
 }
 
 export function isAuthEnabled(): boolean {
-  return process.env.ADMIN_AUTH_ENABLED === 'true';
+  // Secure-by-default: auth is enabled unless explicitly disabled.
+  return process.env.ADMIN_AUTH_ENABLED !== 'false';
 }
 
 // ── Telegram Login Validation ──────────────────────────────────
@@ -102,9 +103,7 @@ export function signJwt(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
 
   const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const body = base64UrlEncode(JSON.stringify(fullPayload));
-  const signature = createHmac('sha256', secret)
-    .update(`${header}.${body}`)
-    .digest('base64url');
+  const signature = createHmac('sha256', secret).update(`${header}.${body}`).digest('base64url');
 
   return `${header}.${body}.${signature}`;
 }

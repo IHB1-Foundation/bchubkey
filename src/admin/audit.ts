@@ -10,7 +10,12 @@ const logger = createChildLogger('admin:audit');
 const SYSTEM_GROUP_SENTINEL = '__system__';
 
 interface AdminAuditEvent {
-  type: 'ADMIN_LOGIN' | 'ADMIN_LOGOUT' | 'ADMIN_AUTH_FAIL' | 'ADMIN_AUTHZ_DENY' | 'ADMIN_SESSION_REFRESH';
+  type:
+    | 'ADMIN_LOGIN'
+    | 'ADMIN_LOGOUT'
+    | 'ADMIN_AUTH_FAIL'
+    | 'ADMIN_AUTHZ_DENY'
+    | 'ADMIN_SESSION_REFRESH';
   adminUserId?: string;
   tgUserId?: string;
   groupId?: string;
@@ -48,7 +53,12 @@ export async function logAdminAudit(event: AdminAuditEvent): Promise<void> {
     if (!groupExists) {
       // Can't write audit log without valid group FK — log to structured logger instead
       logger.warn(
-        { event: event.type, adminUserId: event.adminUserId, tgUserId: event.tgUserId, payload: event.payload },
+        {
+          event: event.type,
+          adminUserId: event.adminUserId,
+          tgUserId: event.tgUserId,
+          payload: event.payload,
+        },
         'Admin audit event (no group for FK)'
       );
       return;

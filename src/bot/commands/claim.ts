@@ -45,8 +45,7 @@ export async function handleClaim(ctx: Context) {
 
   if (!group) {
     await ctx.reply(
-      'This group is not configured yet.\n' +
-        'Run /setup first to configure token gating.'
+      'This group is not configured yet.\n' + 'Run /setup first to configure token gating.'
     );
     return;
   }
@@ -77,10 +76,9 @@ export async function handleClaim(ctx: Context) {
   });
 
   if (existing) {
-    await ctx.reply(
-      `You already have *${existing.role}* access to the dashboard for this group.`,
-      { parse_mode: 'Markdown' }
-    );
+    await ctx.reply(`You already have *${existing.role}* access to the dashboard for this group.`, {
+      parse_mode: 'Markdown',
+    });
     return;
   }
 

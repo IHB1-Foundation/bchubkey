@@ -4,9 +4,10 @@
  * Provides ChainAdapter singleton for BCH chain interactions
  */
 
-import { createFulcrumAdapter, FulcrumAdapter } from './fulcrum.js';
+import { createFulcrumAdapter } from './fulcrum.js';
 import { createChildLogger } from '../util/logger.js';
 import type { ChainAdapter } from './types.js';
+import type { FulcrumAdapter } from './fulcrum.js';
 
 export * from './types.js';
 export { FulcrumAdapter } from './fulcrum.js';

@@ -55,3 +55,6 @@ jobs:
 
       - name: Format check
         run: npm run format:check
+
+      - name: Security tests
+        run: npm run test:security
