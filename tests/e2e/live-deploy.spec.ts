@@ -2,6 +2,22 @@ import { expect, test } from '@playwright/test';
 import { API_ORIGIN, WEB_ORIGIN } from './fixtures';
 
 test.describe('Live deployment smoke checks', () => {
+  test('serves favicon and manifest assets', async ({ request }) => {
+    const [favicon, manifest] = await Promise.all([
+      request.get(`${WEB_ORIGIN}/favicon.svg`),
+      request.get(`${WEB_ORIGIN}/site.webmanifest`),
+    ]);
+
+    expect(favicon.status()).toBe(200);
+    expect((await favicon.text()).toLowerCase()).toContain('<svg');
+
+    expect(manifest.status()).toBe(200);
+    expect(await manifest.json()).toMatchObject({
+      name: 'BCHubKey Admin',
+      short_name: 'BCHubKey',
+    });
+  });
+
   test('loads production landing and reaches an online/offline health state', async ({ page }) => {
     const apiRequests: string[] = [];
     page.on('request', (req) => {
@@ -64,7 +80,9 @@ test.describe('Live deployment smoke checks', () => {
     expect(token).toBeNull();
   });
 
-  test('refresh requests protected groups endpoint and keeps user unauthenticated', async ({ page }) => {
+  test('refresh requests protected groups endpoint and keeps user unauthenticated', async ({
+    page,
+  }) => {
     await page.goto(WEB_ORIGIN);
 
     const groupsResponsePromise = page.waitForResponse(

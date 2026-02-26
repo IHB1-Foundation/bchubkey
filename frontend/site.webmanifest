@@ -1,0 +1,16 @@
+{
+  "name": "BCHubKey Admin",
+  "short_name": "BCHubKey",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2ece3",
+  "theme_color": "#0e5f59",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
