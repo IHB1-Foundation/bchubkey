@@ -1,0 +1,97 @@
+name: E2E Playwright
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: 'Run full multi-browser matrix suite'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  e2e-mock:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run mocked coverage suite
+        run: npm run test:e2e:mock
+      - name: Upload mock report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-mock-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
+  e2e-live:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run live deployed checks
+        run: npm run test:e2e:live:all
+      - name: Upload live report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
+  e2e-full-matrix:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.full_matrix == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run full browser matrix suite
+        env:
+          PW_FULL_MATRIX: '1'
+        run: npm run test:e2e
+      - name: Upload matrix report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-matrix-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore

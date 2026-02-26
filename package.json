@@ -27,7 +27,12 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "test:e2e:live": "playwright test tests/e2e/live-deploy.spec.ts",
-    "test:e2e:mock": "playwright test tests/e2e/mock-coverage.spec.ts"
+    "test:e2e:mock": "playwright test tests/e2e/mock-coverage.spec.ts",
+    "test:e2e:ui": "playwright test tests/e2e/ui-quality.spec.ts",
+    "test:e2e:contracts": "playwright test tests/e2e/live-api-contract.spec.ts tests/e2e/live-observability.spec.ts",
+    "test:e2e:live:all": "playwright test tests/e2e/live-*.spec.ts tests/e2e/ui-quality.spec.ts",
+    "test:e2e:matrix": "PW_FULL_MATRIX=1 playwright test",
+    "test:e2e:ci": "npm run test:e2e:mock && npm run test:e2e:live:all"
   },
   "dependencies": {
     "@bitauth/libauth": "^3.0.0",
