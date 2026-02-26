@@ -2,6 +2,7 @@ import type { Context } from 'telegraf';
 import { Markup, Input } from 'telegraf';
 import { createChildLogger } from '../../util/logger.js';
 import { prisma } from '../../db/client.js';
+import { processGateCheck } from '../../gate/index.js';
 import type { VerifySession } from '../../generated/prisma/client.js';
 import {
   getVerifyFlowState,
@@ -23,6 +24,67 @@ const VERIFY_BUTTONS = Markup.inlineKeyboard([
   [Markup.button.callback(ButtonLabels.REFRESH, 'verify_refresh')],
   [Markup.button.callback(ButtonLabels.CANCEL, 'verify_cancel')],
 ]);
+
+function isAutoVerifyEnabled(): boolean {
+  return process.env.AUTO_VERIFY_ON_SENT === 'true';
+}
+
+async function autoVerifySession(ctx: Context, userId: string, session: VerifySession): Promise<void> {
+  const syntheticTxid = `AUTO_VERIFY_${Date.now()}`;
+
+  await prisma.verifySession.update({
+    where: { id: session.id },
+    data: {
+      status: 'SUCCESS',
+      txid: syntheticTxid,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      groupId: session.groupId,
+      tgUserId: session.tgUserId,
+      type: 'VERIFY_SUCCESS',
+      payloadJson: JSON.stringify({
+        sessionId: session.id,
+        txid: syntheticTxid,
+        claimedAddress: session.address,
+        mode: 'AUTO_VERIFY_ON_SENT',
+      }),
+    },
+  });
+
+  await prisma.userAddress.updateMany({
+    where: {
+      tgUserId: session.tgUserId,
+      address: session.address,
+      active: true,
+    },
+    data: {
+      verified: true,
+      verifiedAt: new Date(),
+    },
+  });
+
+  try {
+    await processGateCheck(session.tgUserId, session.groupId);
+  } catch (error) {
+    logger.error({ error, sessionId: session.id }, 'Gate check failed after auto verify');
+  }
+
+  await ctx.editMessageText(
+    `*Step 3 of 3: Gate Check*\n\n` +
+      `*Status:* VERIFIED\n\n` +
+      `Demo auto-verify mode is enabled.\n` +
+      `Ownership proof was accepted without waiting for an on-chain transaction.\n\n` +
+      `*Transaction:* \`${truncate(syntheticTxid, 20)}\`\n\n` +
+      `Gate check has been executed.`,
+    { parse_mode: 'Markdown' }
+  );
+
+  updateVerifyFlowState(userId, { step: 'COMPLETE' });
+  deleteVerifyFlowState(userId);
+}
 
 /**
  * Sends session instructions with QR code if available.
@@ -257,6 +319,12 @@ async function handleSentClick(ctx: Context, userId: string) {
         [Markup.button.callback(ButtonLabels.START_OVER, 'verify_start_over')],
       ]),
     });
+    return;
+  }
+
+  if (isAutoVerifyEnabled()) {
+    await autoVerifySession(ctx, userId, session);
+    logger.info({ userId, sessionId: session.id }, 'Auto-verify completed');
     return;
   }
 
