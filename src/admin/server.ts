@@ -418,10 +418,25 @@ async function handleAuthTelegram(
     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? req.socket.remoteAddress;
   const ua = req.headers['user-agent'];
 
-  const result = await authenticateTelegram(data, {
-    ipAddress: ip,
-    userAgent: ua,
-  });
+  let result;
+  try {
+    result = await authenticateTelegram(data, {
+      ipAddress: ip,
+      userAgent: ua,
+    });
+  } catch (error) {
+    logger.error({ error }, 'Telegram auth endpoint failed');
+    const prismaCode = (error as { code?: string })?.code;
+    if (prismaCode === 'P2021' || prismaCode === 'P2022') {
+      jsonResponse(req, res, 503, {
+        error:
+          'Admin auth schema is not initialized. Run Prisma migrations (prisma migrate deploy) and redeploy.',
+      });
+      return;
+    }
+    jsonResponse(req, res, 500, { error: 'Internal server error' });
+    return;
+  }
 
   if (!result) {
     jsonResponse(req, res, 401, { error: 'Invalid authentication' });

@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "start": "npm run start:railway",
+    "start:app": "node dist/index.js",
     "start:railway": "npm run db:generate && prisma migrate deploy && node dist/index.js",
     "build": "npm run db:generate && tsc",
     "lint": "eslint src/",
