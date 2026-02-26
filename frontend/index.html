@@ -1,806 +1,1168 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BCHubKey Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
-    rel="stylesheet"
-  >
-  <style>
-    :root {
-      --color-primary: #0e5f59;
-      --color-primary-strong: #084843;
-      --color-accent: #d0862e;
-      --color-bg: #f2ece3;
-      --color-bg-soft: #e6edf4;
-      --color-card: rgba(255, 255, 255, 0.76);
-      --color-card-solid: #ffffff;
-      --color-text: #182433;
-      --color-muted: #576476;
-      --color-border: rgba(24, 36, 51, 0.12);
-      --color-pass: #1d7f53;
-      --color-pass-bg: #ddf7e8;
-      --color-fail: #b23c3c;
-      --color-fail-bg: #fce2df;
-      --color-pending: #946018;
-      --color-pending-bg: #fcedd0;
-      --radius: 18px;
-      --shadow: 0 16px 42px rgba(12, 26, 38, 0.1);
-      --shadow-soft: 0 8px 24px rgba(12, 26, 38, 0.08);
-    }
-
-    [data-theme="dark"] {
-      --color-primary: #63d4c8;
-      --color-primary-strong: #4db7ac;
-      --color-accent: #e9aa52;
-      --color-bg: #0f1a23;
-      --color-bg-soft: #141f2d;
-      --color-card: rgba(18, 29, 40, 0.78);
-      --color-card-solid: #162432;
-      --color-text: #e9f2f9;
-      --color-muted: #9fb1c3;
-      --color-border: rgba(227, 239, 252, 0.12);
-      --color-pass: #74e2aa;
-      --color-pass-bg: #1f4735;
-      --color-fail: #f59898;
-      --color-fail-bg: #4f2424;
-      --color-pending: #f2ca7a;
-      --color-pending-bg: #493d20;
-      --shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
-      --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.28);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      min-height: 100%;
-    }
-
-    body {
-      font-family: 'Manrope', sans-serif;
-      background:
-        radial-gradient(1200px 600px at 120% -10%, rgba(208, 134, 46, 0.22), transparent 60%),
-        radial-gradient(900px 500px at -20% 20%, rgba(14, 95, 89, 0.18), transparent 65%),
-        linear-gradient(140deg, var(--color-bg), var(--color-bg-soft));
-      color: var(--color-text);
-      line-height: 1.5;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-      background-size: 24px 24px;
-      opacity: 0.22;
-      z-index: -1;
-    }
-
-    @keyframes riseIn {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BCHubKey Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-primary: #0e5f59;
+        --color-primary-strong: #084843;
+        --color-accent: #d0862e;
+        --color-accent-strong: #a76619;
+        --color-bg: #f2ece3;
+        --color-bg-soft: #e6edf4;
+        --color-card: rgba(255, 255, 255, 0.76);
+        --color-card-solid: #ffffff;
+        --color-ink-soft: rgba(24, 36, 51, 0.06);
+        --color-text: #182433;
+        --color-muted: #576476;
+        --color-border: rgba(24, 36, 51, 0.12);
+        --color-pass: #1d7f53;
+        --color-pass-bg: #ddf7e8;
+        --color-fail: #b23c3c;
+        --color-fail-bg: #fce2df;
+        --color-pending: #946018;
+        --color-pending-bg: #fcedd0;
+        --radius: 18px;
+        --radius-xl: 26px;
+        --shadow: 0 16px 42px rgba(12, 26, 38, 0.1);
+        --shadow-soft: 0 8px 24px rgba(12, 26, 38, 0.08);
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+
+      [data-theme='dark'] {
+        --color-primary: #63d4c8;
+        --color-primary-strong: #4db7ac;
+        --color-accent: #e9aa52;
+        --color-accent-strong: #ffcb86;
+        --color-bg: #0f1a23;
+        --color-bg-soft: #141f2d;
+        --color-card: rgba(18, 29, 40, 0.78);
+        --color-card-solid: #162432;
+        --color-ink-soft: rgba(227, 239, 252, 0.07);
+        --color-text: #e9f2f9;
+        --color-muted: #9fb1c3;
+        --color-border: rgba(227, 239, 252, 0.12);
+        --color-pass: #74e2aa;
+        --color-pass-bg: #1f4735;
+        --color-fail: #f59898;
+        --color-fail-bg: #4f2424;
+        --color-pending: #f2ca7a;
+        --color-pending-bg: #493d20;
+        --shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
+        --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.28);
       }
-    }
 
-    @keyframes pulseDot {
-      0% {
-        box-shadow: 0 0 0 0 rgba(80, 201, 149, 0.38);
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      75% {
-        box-shadow: 0 0 0 9px rgba(80, 201, 149, 0);
+
+      html,
+      body {
+        min-height: 100%;
       }
-      100% {
-        box-shadow: 0 0 0 0 rgba(80, 201, 149, 0);
+
+      body {
+        font-family: 'Manrope', sans-serif;
+        background:
+          radial-gradient(1200px 600px at 120% -10%, rgba(208, 134, 46, 0.22), transparent 60%),
+          radial-gradient(900px 500px at -20% 20%, rgba(14, 95, 89, 0.18), transparent 65%),
+          linear-gradient(140deg, var(--color-bg), var(--color-bg-soft));
+        color: var(--color-text);
+        line-height: 1.5;
+        position: relative;
+        overflow-x: hidden;
       }
-    }
 
-    header {
-      margin: 20px auto 0;
-      max-width: 1240px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid var(--color-border);
-      border-radius: 20px;
-      background: var(--color-card);
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow-soft);
-      animation: riseIn 360ms ease-out both;
-    }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.22;
+        z-index: -1;
+      }
 
-    .brand h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      margin-bottom: 2px;
-    }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: -120px;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            480px 280px at 8% 18%,
+            color-mix(in srgb, var(--color-accent) 22%, transparent),
+            transparent 74%
+          ),
+          radial-gradient(
+            540px 340px at 88% 14%,
+            color-mix(in srgb, var(--color-primary) 28%, transparent),
+            transparent 76%
+          ),
+          radial-gradient(
+            620px 360px at 48% 104%,
+            color-mix(in srgb, var(--color-primary) 18%, transparent),
+            transparent 78%
+          );
+        opacity: 0.7;
+        z-index: -2;
+        animation: drift 13s ease-in-out infinite;
+      }
 
-    .brand h1 span {
-      color: var(--color-accent);
-    }
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    .brand p {
-      color: var(--color-muted);
-      font-size: 0.85rem;
-      letter-spacing: 0.01em;
-    }
+      @keyframes drift {
+        0% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        50% {
+          transform: translate3d(14px, -12px, 0) scale(1.03);
+        }
+        100% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
 
-    .controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
+      @keyframes sheen {
+        from {
+          transform: translateX(-120%);
+        }
+        to {
+          transform: translateX(120%);
+        }
+      }
 
-    .controls button {
-      border: 1px solid var(--color-border);
-      color: var(--color-text);
-      background: var(--color-card-solid);
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.78rem;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-    }
+      @keyframes pulseDot {
+        0% {
+          box-shadow: 0 0 0 0 rgba(80, 201, 149, 0.38);
+        }
+        75% {
+          box-shadow: 0 0 0 9px rgba(80, 201, 149, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(80, 201, 149, 0);
+        }
+      }
 
-    .controls button:hover {
-      transform: translateY(-1px);
-      border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
-      background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card-solid));
-    }
-
-    .user-info {
-      font-size: 0.82rem;
-      color: var(--color-muted);
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
-    }
-
-    main {
-      max-width: 1240px;
-      margin: 18px auto 42px;
-      padding: 0 18px;
-      animation: riseIn 420ms ease-out both;
-    }
-
-    .card {
-      background: var(--color-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-bottom: 18px;
-      backdrop-filter: blur(6px);
-      animation: riseIn 420ms ease-out both;
-    }
-
-    .card h2 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.08rem;
-      margin-bottom: 14px;
-      letter-spacing: 0.01em;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .stat-box {
-      background: var(--color-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      box-shadow: var(--shadow-soft);
-      padding: 16px 18px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-box::after {
-      content: '';
-      position: absolute;
-      width: 120px;
-      height: 120px;
-      right: -40px;
-      bottom: -65px;
-      background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 70%);
-      pointer-events: none;
-    }
-
-    .stat-box .value {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.7rem;
-      font-weight: 700;
-      line-height: 1.1;
-    }
-
-    .stat-box .label {
-      font-size: 0.75rem;
-      color: var(--color-muted);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-top: 3px;
-    }
-
-    #groups-table,
-    #detail-content {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 11px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--color-border);
-      vertical-align: middle;
-    }
-
-    th {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600;
-      font-size: 0.74rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--color-muted);
-      background: color-mix(in srgb, var(--color-bg-soft) 40%, transparent);
-    }
-
-    td {
-      font-size: 0.9rem;
-    }
-
-    tr:hover td {
-      background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 9px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-    }
-
-    .badge-pass {
-      background: var(--color-pass-bg);
-      color: var(--color-pass);
-    }
-
-    .badge-fail {
-      background: var(--color-fail-bg);
-      color: var(--color-fail);
-    }
-
-    .badge-pending {
-      background: var(--color-pending-bg);
-      color: var(--color-pending);
-    }
-
-    .health {
-      font-size: 0.76rem;
-      color: var(--color-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border: 1px solid var(--color-border);
-      border-radius: 999px;
-      background: var(--color-card-solid);
-    }
-
-    .health .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 2px;
-      background: #9aa6b7;
-    }
-
-    .health .dot.ok {
-      background: #50c995;
-      animation: pulseDot 1.8s infinite;
-    }
-
-    .health .dot.err {
-      background: #ea6666;
-      animation: none;
-    }
-
-    .error-msg {
-      color: var(--color-fail);
-      padding: 14px;
-      text-align: center;
-      border-radius: 12px;
-      background: var(--color-fail-bg);
-      border: 1px solid color-mix(in srgb, var(--color-fail) 26%, transparent);
-    }
-
-    .loading {
-      color: var(--color-muted);
-      padding: 18px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    a {
-      color: var(--color-primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    a:hover {
-      color: var(--color-primary-strong);
-      text-decoration: underline;
-    }
-
-    .mono {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.82rem;
-    }
-
-    #detail-view {
-      display: none;
-    }
-
-    #detail-view > p {
-      margin-bottom: 10px;
-    }
-
-    /* Login view */
-    #login-view {
-      display: none;
-      place-items: center;
-      padding: 70px 20px;
-    }
-
-    .login-panel {
-      width: min(560px, 100%);
-      border: 1px solid var(--color-border);
-      border-radius: 24px;
-      background: var(--color-card);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-      padding: 32px 26px;
-      text-align: center;
-      animation: riseIn 450ms ease-out both;
-    }
-
-    #login-view h2 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.52rem;
-      margin-bottom: 10px;
-    }
-
-    #login-view p {
-      color: var(--color-muted);
-      margin-bottom: 18px;
-    }
-
-    #telegram-login {
-      display: inline-block;
-      margin-top: 12px;
-    }
-
-    #no-auth-msg {
-      display: none;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--color-border);
-    }
-
-    /* Dashboard views (hidden until authed) */
-    #dashboard {
-      display: none;
-    }
-
-    @media (max-width: 980px) {
       header {
-        margin: 12px 12px 0;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
+        margin: 20px auto 0;
+        max-width: 1240px;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        background:
+          linear-gradient(
+            120deg,
+            color-mix(in srgb, var(--color-card) 92%, transparent),
+            color-mix(in srgb, var(--color-bg-soft) 44%, transparent)
+          ),
+          var(--color-card);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-soft);
+        animation: riseIn 360ms ease-out both;
+        position: relative;
+        overflow: hidden;
+      }
+
+      header::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          100deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.26) 45%,
+          transparent 100%
+        );
+        mix-blend-mode: soft-light;
+      }
+
+      .brand h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.38rem;
+        font-weight: 700;
+        letter-spacing: 0.015em;
+        margin-bottom: 2px;
+        text-wrap: balance;
+      }
+
+      .brand h1 span {
+        background: linear-gradient(92deg, var(--color-accent), var(--color-accent-strong));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .brand p {
+        color: var(--color-muted);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       .controls {
-        width: 100%;
-        justify-content: flex-start;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
       }
 
       .controls button {
-        padding: 8px 12px;
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        background:
+          linear-gradient(
+            120deg,
+            color-mix(in srgb, var(--color-card-solid) 86%, transparent),
+            color-mix(in srgb, var(--color-primary) 10%, var(--color-card-solid))
+          ),
+          var(--color-card-solid);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease,
+          background 0.15s ease;
+        position: relative;
+        overflow: hidden;
       }
-    }
 
-    @media (max-width: 640px) {
+      .controls button:hover {
+        transform: translateY(-1px);
+        border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+        background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card-solid));
+      }
+
+      .controls button::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+        transform: translateX(-120%);
+        transition: transform 0.32s ease;
+      }
+
+      .controls button:hover::after {
+        transform: translateX(120%);
+      }
+
+      .user-info {
+        font-size: 0.82rem;
+        color: var(--color-muted);
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
+      }
+
       main {
-        padding: 0 12px;
-        margin-top: 12px;
+        max-width: 1240px;
+        margin: 18px auto 42px;
+        padding: 0 18px;
+        animation: riseIn 420ms ease-out both;
+      }
+
+      .ops-hero {
+        border-radius: var(--radius-xl);
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 12% 18%,
+            color-mix(in srgb, var(--color-accent) 24%, transparent),
+            transparent 58%
+          ),
+          radial-gradient(
+            circle at 88% 10%,
+            color-mix(in srgb, var(--color-primary) 20%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(
+            130deg,
+            color-mix(in srgb, var(--color-card) 96%, transparent),
+            color-mix(in srgb, var(--color-bg-soft) 65%, transparent)
+          );
+      }
+
+      .ops-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          100deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.22) 46%,
+          transparent 100%
+        );
+        animation: sheen 9s linear infinite;
+        pointer-events: none;
+      }
+
+      .ops-headline {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 18px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .ops-kicker {
+        font-size: 0.73rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .ops-headline h2 {
+        margin: 0;
+        font-size: clamp(1.2rem, 1.1rem + 1vw, 1.9rem);
+        line-height: 1.14;
+        max-width: 780px;
+        font-family: 'Space Grotesk', sans-serif;
+        text-wrap: balance;
+      }
+
+      .ops-headline h2 strong {
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+
+      .ops-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .ops-cell {
+        border-radius: 15px;
+        border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+        background: linear-gradient(
+          160deg,
+          color-mix(in srgb, var(--color-card-solid) 84%, transparent),
+          color-mix(in srgb, var(--color-bg-soft) 60%, transparent)
+        );
+        padding: 12px 12px 11px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      }
+
+      .ops-label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--color-muted);
+        font-family: 'IBM Plex Mono', monospace;
+        margin-bottom: 4px;
+      }
+
+      .ops-value {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--color-text);
+        word-break: break-word;
       }
 
       .card {
-        padding: 16px;
+        background: var(--color-card);
+        border-radius: var(--radius);
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow);
+        padding: 22px;
+        margin-bottom: 18px;
+        backdrop-filter: blur(6px);
+        animation: riseIn 420ms ease-out both;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.2), transparent 36%);
+      }
+
+      .card h2 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.08rem;
+        margin-bottom: 14px;
+        letter-spacing: 0.01em;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .stat-box {
+        background: var(--color-card);
+        border-radius: var(--radius);
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-soft);
+        padding: 16px 18px;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+
+      .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px color-mix(in srgb, var(--color-primary) 18%, transparent);
+      }
+
+      .stat-box::after {
+        content: '';
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        right: -40px;
+        bottom: -65px;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--color-primary) 22%, transparent),
+          transparent 70%
+        );
+        pointer-events: none;
       }
 
       .stat-box .value {
-        font-size: 1.45rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        line-height: 1.1;
       }
 
+      .stat-box .label {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-top: 3px;
+      }
+
+      #groups-table,
+      #detail-content {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 11px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+        vertical-align: middle;
+      }
+
+      th {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-muted);
+        background: linear-gradient(
+          120deg,
+          color-mix(in srgb, var(--color-bg-soft) 70%, transparent),
+          color-mix(in srgb, var(--color-primary) 4%, transparent)
+        );
+      }
+
+      td {
+        font-size: 0.9rem;
+      }
+
+      tr:hover td {
+        background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      .badge-pass {
+        background: var(--color-pass-bg);
+        color: var(--color-pass);
+      }
+
+      .badge-fail {
+        background: var(--color-fail-bg);
+        color: var(--color-fail);
+      }
+
+      .badge-pending {
+        background: var(--color-pending-bg);
+        color: var(--color-pending);
+      }
+
+      .health {
+        font-size: 0.76rem;
+        color: var(--color-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border: 1px solid var(--color-border);
+        border-radius: 999px;
+        background: var(--color-card-solid);
+      }
+
+      .health .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 2px;
+        background: #9aa6b7;
+      }
+
+      .health .dot.ok {
+        background: #50c995;
+        animation: pulseDot 1.8s infinite;
+      }
+
+      .health .dot.err {
+        background: #ea6666;
+        animation: none;
+      }
+
+      .error-msg {
+        color: var(--color-fail);
+        padding: 14px;
+        text-align: center;
+        border-radius: 12px;
+        background: var(--color-fail-bg);
+        border: 1px solid color-mix(in srgb, var(--color-fail) 26%, transparent);
+      }
+
+      .loading {
+        color: var(--color-muted);
+        padding: 18px;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      a:hover {
+        color: var(--color-primary-strong);
+        text-decoration: underline;
+      }
+
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.82rem;
+      }
+
+      #detail-view {
+        display: none;
+      }
+
+      #detail-view > p {
+        margin-bottom: 10px;
+      }
+
+      /* Login view */
       #login-view {
-        padding: 42px 12px;
+        display: none;
+        place-items: center;
+        padding: 70px 20px;
       }
 
       .login-panel {
-        padding: 24px 18px;
-        border-radius: 18px;
+        width: min(560px, 100%);
+        border: 1px solid var(--color-border);
+        border-radius: 24px;
+        background: var(--color-card);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(8px);
+        padding: 32px 26px;
+        text-align: center;
+        animation: riseIn 450ms ease-out both;
+        position: relative;
+        overflow: hidden;
       }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="brand">
-      <h1><span>BCHubKey</span> Control Deck</h1>
-      <p>Token-gated Telegram operations</p>
-    </div>
-    <div class="controls">
-      <div class="health" id="health">
-        <span class="dot"></span>
-        <span id="health-text">Connecting...</span>
-      </div>
-      <span class="user-info" id="user-info"></span>
-      <button onclick="toggleTheme()">Theme</button>
-      <button onclick="refresh()">Refresh</button>
-      <button id="logout-btn" onclick="doLogout()" style="display:none">Logout</button>
-    </div>
-  </header>
 
-  <!-- Login view -->
-  <div id="login-view">
-    <div class="login-panel">
-      <h2>Admin Access</h2>
-      <p>Sign in with Telegram to view groups, policy state, and enforcement logs.</p>
-      <div id="telegram-login"></div>
-      <p id="login-error" class="error-msg" style="display:none"></p>
-      <p id="no-auth-msg">
-        Authentication is not enabled. <a href="#" onclick="enterNoAuth(); return false;">Continue without login</a>
-      </p>
-    </div>
-  </div>
-
-  <!-- Dashboard (shown after auth) -->
-  <div id="dashboard">
-    <main>
-      <div id="list-view">
-        <div class="stats" id="stats"></div>
-        <div class="card">
-          <h2>Groups</h2>
-          <div id="groups-table"><div class="loading">Loading...</div></div>
-        </div>
-      </div>
-      <div id="detail-view">
-        <p><a href="#" onclick="showList(); return false;">&larr; Back to groups</a></p>
-        <div id="detail-content"></div>
-      </div>
-    </main>
-  </div>
-
-  <script src="/env.js"></script>
-  <script>
-    const APP_CONFIG = window.__ENV__ || {};
-    const API_BASE = APP_CONFIG.API_BASE_URL || 'https://api.bchubkey.com';
-    const BOT_USERNAME = APP_CONFIG.BOT_USERNAME || '';
-
-    // ── Theme ──────────────────────────────────────
-    function getTheme() { return localStorage.getItem('theme') || 'light'; }
-    function toggleTheme() {
-      const next = getTheme() === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', next);
-      document.documentElement.setAttribute('data-theme', next);
-    }
-    document.documentElement.setAttribute('data-theme', getTheme());
-
-    // ── Auth State ─────────────────────────────────
-    let authToken = localStorage.getItem('admin_token') || null;
-    let authUser = null;
-    let authEnabled = null; // null = unknown, true/false after health check
-
-    function getAuthHeaders() {
-      const h = { 'Content-Type': 'application/json' };
-      if (authToken) h['Authorization'] = `Bearer ${authToken}`;
-      return h;
-    }
-
-    // ── Helpers ────────────────────────────────────
-    function badge(state) {
-      const cls = state.includes('PASS') ? 'pass' : state.includes('FAIL') ? 'fail' : 'pending';
-      return `<span class="badge badge-${cls}">${esc(state)}</span>`;
-    }
-    function esc(s) {
-      if (!s) return '';
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
-    function fmtDate(iso) {
-      if (!iso) return '-';
-      return new Date(iso).toLocaleString();
-    }
-
-    async function fetchApi(path) {
-      const res = await fetch(`${API_BASE}${path}`, { headers: getAuthHeaders() });
-      if (res.status === 401) {
-        handleAuthExpired();
-        throw new Error('Session expired');
+      .login-panel::after {
+        content: '';
+        position: absolute;
+        width: 360px;
+        height: 360px;
+        right: -160px;
+        top: -170px;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--color-accent) 24%, transparent),
+          transparent 70%
+        );
+        pointer-events: none;
       }
-      if (res.status === 403) throw new Error('Access denied');
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      return res.json();
-    }
 
-    async function postApi(path, body) {
-      const res = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `API ${res.status}`);
+      #login-view h2 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.52rem;
+        margin-bottom: 10px;
       }
-      return res.json();
-    }
 
-    // ── Auth Flow ──────────────────────────────────
-
-    function handleAuthExpired() {
-      authToken = null;
-      authUser = null;
-      localStorage.removeItem('admin_token');
-      showLoginView();
-    }
-
-    function showLoginView() {
-      document.getElementById('login-view').style.display = 'grid';
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('logout-btn').style.display = 'none';
-      document.getElementById('user-info').textContent = '';
-
-      // Render Telegram Login Widget if bot username is configured
-      const container = document.getElementById('telegram-login');
-      container.innerHTML = '';
-      if (BOT_USERNAME) {
-        const script = document.createElement('script');
-        script.src = 'https://telegram.org/js/telegram-widget.js?22';
-        script.setAttribute('data-telegram-login', BOT_USERNAME);
-        script.setAttribute('data-lang', 'en');
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-        script.setAttribute('data-request-access', 'write');
-        container.appendChild(script);
-      } else {
-        container.innerHTML = '<p style="color:var(--color-muted)">Bot username not configured. Set BOT_USERNAME in frontend/env.js.</p>';
+      #login-view p {
+        color: var(--color-muted);
+        margin-bottom: 18px;
       }
-    }
 
-    function showDashboard() {
-      document.getElementById('login-view').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('logout-btn').style.display = 'inline-block';
-      if (authUser) {
-        document.getElementById('user-info').textContent = authUser.username
-          ? `@${authUser.username}`
-          : authUser.firstName || 'Admin';
+      #telegram-login {
+        display: inline-block;
+        margin-top: 12px;
       }
-      loadGroups();
-    }
 
-    // Telegram Login Widget callback (global function)
-    window.onTelegramAuth = async function(user) {
-      const errEl = document.getElementById('login-error');
-      errEl.style.display = 'none';
-      try {
-        const result = await postApi('/api/auth/telegram', user);
-        authToken = result.token;
-        authUser = result.user;
-        localStorage.setItem('admin_token', authToken);
-        showDashboard();
-      } catch (e) {
-        errEl.textContent = `Login failed: ${e.message}`;
-        errEl.style.display = 'block';
+      #no-auth-msg {
+        display: none;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-border);
       }
-    };
 
-    function enterNoAuth() {
-      // When auth is disabled, just show the dashboard
-      authToken = null;
-      showDashboard();
-    }
-
-    async function doLogout() {
-      try {
-        if (authToken) await postApi('/api/auth/logout', {});
-      } catch { /* ignore */ }
-      authToken = null;
-      authUser = null;
-      localStorage.removeItem('admin_token');
-      showLoginView();
-    }
-
-    async function tryRestoreSession() {
-      if (!authToken) return false;
-      try {
-        const data = await fetchApi('/api/auth/me');
-        authUser = data.user;
-        return true;
-      } catch {
-        authToken = null;
-        localStorage.removeItem('admin_token');
-        return false;
+      /* Dashboard views (hidden until authed) */
+      #dashboard {
+        display: none;
       }
-    }
 
-    // ── Health Check ───────────────────────────────
-    async function checkHealth() {
-      const dot = document.querySelector('#health .dot');
-      const text = document.getElementById('health-text');
-      try {
-        const h = await fetchApi('/api/health');
-        dot.className = 'dot ok';
-        const dbPart = h.db === 'ok' ? `DB ${h.dbLatencyMs ?? '-'}ms` : 'DB N/A';
-        text.textContent = `OK ${dbPart}${h.demoMode ? ' DEMO' : ''}`;
-        authEnabled = h.authEnabled;
-      } catch {
-        dot.className = 'dot err';
-        text.textContent = 'Offline';
-      }
-    }
-
-    // ── Groups List ────────────────────────────────
-    async function loadGroups() {
-      const container = document.getElementById('groups-table');
-      const statsEl = document.getElementById('stats');
-      try {
-        const data = await fetchApi('/api/groups');
-        const groups = data.groups;
-        if (!groups.length) {
-          container.innerHTML = '<p class="loading">No groups configured yet</p>';
-          statsEl.innerHTML = '';
-          return;
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
         }
-        const totalMembers = groups.reduce((s, g) => s + g.memberCount, 0);
-        const active = groups.filter(g => g.status === 'ACTIVE').length;
-        statsEl.innerHTML = `
+      }
+
+      @media (max-width: 980px) {
+        header {
+          margin: 12px 12px 0;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 14px;
+        }
+
+        .controls {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
+        .controls button {
+          padding: 8px 12px;
+        }
+
+        .ops-hero {
+          padding: 18px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        main {
+          padding: 0 12px;
+          margin-top: 12px;
+        }
+
+        .card {
+          padding: 16px;
+        }
+
+        .stat-box .value {
+          font-size: 1.45rem;
+        }
+
+        #login-view {
+          padding: 42px 12px;
+        }
+
+        .login-panel {
+          padding: 24px 18px;
+          border-radius: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1><span>BCHubKey</span> Control Deck</h1>
+        <p>Token-gated Telegram operations</p>
+      </div>
+      <div class="controls">
+        <div class="health" id="health">
+          <span class="dot"></span>
+          <span id="health-text">Connecting...</span>
+        </div>
+        <span class="user-info" id="user-info"></span>
+        <button onclick="toggleTheme()">Theme</button>
+        <button onclick="refresh()">Refresh</button>
+        <button id="logout-btn" onclick="doLogout()" style="display: none">Logout</button>
+      </div>
+    </header>
+
+    <!-- Login view -->
+    <div id="login-view">
+      <div class="login-panel">
+        <h2>Admin Access</h2>
+        <p>Sign in with Telegram to view groups, policy state, and enforcement logs.</p>
+        <div id="telegram-login"></div>
+        <p id="login-error" class="error-msg" style="display: none"></p>
+        <p id="no-auth-msg">
+          Authentication is not enabled.
+          <a
+            href="#"
+            onclick="
+              enterNoAuth();
+              return false;
+            "
+            >Continue without login</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <!-- Dashboard (shown after auth) -->
+    <div id="dashboard">
+      <main>
+        <div id="list-view">
+          <div class="card ops-hero">
+            <div class="ops-headline">
+              <p class="ops-kicker">Live Operations Panel</p>
+              <h2>Control surface for <strong>token-gated</strong> Telegram communities</h2>
+            </div>
+            <div class="ops-grid">
+              <div class="ops-cell">
+                <div class="ops-label">API Endpoint</div>
+                <div class="ops-value mono" id="deck-api-base">Booting...</div>
+              </div>
+              <div class="ops-cell">
+                <div class="ops-label">Auth Mode</div>
+                <div class="ops-value" id="deck-auth-mode">Detecting...</div>
+              </div>
+              <div class="ops-cell">
+                <div class="ops-label">Last Sync</div>
+                <div class="ops-value mono" id="deck-last-sync">Waiting...</div>
+              </div>
+              <div class="ops-cell">
+                <div class="ops-label">Groups Indexed</div>
+                <div class="ops-value" id="deck-groups">-</div>
+              </div>
+            </div>
+          </div>
+          <div class="stats" id="stats"></div>
+          <div class="card">
+            <h2>Groups</h2>
+            <div id="groups-table"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+        <div id="detail-view">
+          <p>
+            <a
+              href="#"
+              onclick="
+                showList();
+                return false;
+              "
+              >&larr; Back to groups</a
+            >
+          </p>
+          <div id="detail-content"></div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/env.js"></script>
+    <script>
+      const APP_CONFIG = window.__ENV__ || {};
+      const API_BASE = APP_CONFIG.API_BASE_URL || 'https://api.bchubkey.com';
+      const BOT_USERNAME = APP_CONFIG.BOT_USERNAME || '';
+
+      // ── Theme ──────────────────────────────────────
+      function getTheme() {
+        return localStorage.getItem('theme') || 'light';
+      }
+      function toggleTheme() {
+        const next = getTheme() === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', next);
+        document.documentElement.setAttribute('data-theme', next);
+      }
+      document.documentElement.setAttribute('data-theme', getTheme());
+
+      // ── Auth State ─────────────────────────────────
+      let authToken = localStorage.getItem('admin_token') || null;
+      let authUser = null;
+      let authEnabled = null; // null = unknown, true/false after health check
+
+      function getAuthHeaders() {
+        const h = { 'Content-Type': 'application/json' };
+        if (authToken) h['Authorization'] = `Bearer ${authToken}`;
+        return h;
+      }
+
+      // ── Helpers ────────────────────────────────────
+      function badge(state) {
+        const cls = state.includes('PASS') ? 'pass' : state.includes('FAIL') ? 'fail' : 'pending';
+        return `<span class="badge badge-${cls}">${esc(state)}</span>`;
+      }
+      function esc(s) {
+        if (!s) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+      function fmtDate(iso) {
+        if (!iso) return '-';
+        return new Date(iso).toLocaleString();
+      }
+
+      function setDeckMeta(partial = {}) {
+        const apiEl = document.getElementById('deck-api-base');
+        const authEl = document.getElementById('deck-auth-mode');
+        const syncEl = document.getElementById('deck-last-sync');
+        const groupsEl = document.getElementById('deck-groups');
+        if (!apiEl || !authEl || !syncEl || !groupsEl) return;
+
+        if (partial.apiBase !== undefined) apiEl.textContent = partial.apiBase;
+        if (partial.authMode !== undefined) authEl.textContent = partial.authMode;
+        if (partial.lastSync !== undefined) syncEl.textContent = partial.lastSync;
+        if (partial.groupsIndexed !== undefined)
+          groupsEl.textContent = String(partial.groupsIndexed);
+      }
+
+      async function fetchApi(path) {
+        const res = await fetch(`${API_BASE}${path}`, { headers: getAuthHeaders() });
+        if (res.status === 401) {
+          handleAuthExpired();
+          throw new Error('Session expired');
+        }
+        if (res.status === 403) throw new Error('Access denied');
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        return res.json();
+      }
+
+      async function postApi(path, body) {
+        const res = await fetch(`${API_BASE}${path}`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `API ${res.status}`);
+        }
+        return res.json();
+      }
+
+      // ── Auth Flow ──────────────────────────────────
+
+      function handleAuthExpired() {
+        authToken = null;
+        authUser = null;
+        localStorage.removeItem('admin_token');
+        showLoginView();
+      }
+
+      function showLoginView() {
+        document.getElementById('login-view').style.display = 'grid';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('user-info').textContent = '';
+        setDeckMeta({ authMode: authEnabled === false ? 'Open dashboard' : 'Auth required' });
+
+        // Render Telegram Login Widget if bot username is configured
+        const container = document.getElementById('telegram-login');
+        container.innerHTML = '';
+        if (BOT_USERNAME) {
+          const script = document.createElement('script');
+          script.src = 'https://telegram.org/js/telegram-widget.js?22';
+          script.setAttribute('data-telegram-login', BOT_USERNAME);
+          script.setAttribute('data-lang', 'en');
+          script.setAttribute('data-size', 'large');
+          script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+          script.setAttribute('data-request-access', 'write');
+          container.appendChild(script);
+        } else {
+          container.innerHTML =
+            '<p style="color:var(--color-muted)">Bot username not configured. Set BOT_USERNAME in frontend/env.js.</p>';
+        }
+      }
+
+      function showDashboard() {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('logout-btn').style.display = 'inline-block';
+        setDeckMeta({ authMode: authEnabled === false ? 'No auth mode' : 'Authenticated' });
+        if (authUser) {
+          document.getElementById('user-info').textContent = authUser.username
+            ? `@${authUser.username}`
+            : authUser.firstName || 'Admin';
+        }
+        loadGroups();
+      }
+
+      // Telegram Login Widget callback (global function)
+      window.onTelegramAuth = async function (user) {
+        const errEl = document.getElementById('login-error');
+        errEl.style.display = 'none';
+        try {
+          const result = await postApi('/api/auth/telegram', user);
+          authToken = result.token;
+          authUser = result.user;
+          localStorage.setItem('admin_token', authToken);
+          showDashboard();
+        } catch (e) {
+          errEl.textContent = `Login failed: ${e.message}`;
+          errEl.style.display = 'block';
+        }
+      };
+
+      function enterNoAuth() {
+        // When auth is disabled, just show the dashboard
+        authToken = null;
+        showDashboard();
+      }
+
+      async function doLogout() {
+        try {
+          if (authToken) await postApi('/api/auth/logout', {});
+        } catch {
+          /* ignore */
+        }
+        authToken = null;
+        authUser = null;
+        localStorage.removeItem('admin_token');
+        showLoginView();
+      }
+
+      async function tryRestoreSession() {
+        if (!authToken) return false;
+        try {
+          const data = await fetchApi('/api/auth/me');
+          authUser = data.user;
+          return true;
+        } catch {
+          authToken = null;
+          localStorage.removeItem('admin_token');
+          return false;
+        }
+      }
+
+      // ── Health Check ───────────────────────────────
+      async function checkHealth() {
+        const dot = document.querySelector('#health .dot');
+        const text = document.getElementById('health-text');
+        try {
+          const h = await fetchApi('/api/health');
+          dot.className = 'dot ok';
+          const dbPart = h.db === 'ok' ? `DB ${h.dbLatencyMs ?? '-'}ms` : 'DB N/A';
+          text.textContent = `OK ${dbPart}${h.demoMode ? ' DEMO' : ''}`;
+          authEnabled = h.authEnabled;
+          setDeckMeta({
+            authMode: h.authEnabled ? 'Auth required' : 'No auth mode',
+            lastSync: `${new Date().toLocaleTimeString()} (${dbPart})`,
+          });
+        } catch {
+          dot.className = 'dot err';
+          text.textContent = 'Offline';
+          setDeckMeta({ authMode: 'Unavailable', lastSync: 'Offline' });
+        }
+      }
+
+      // ── Groups List ────────────────────────────────
+      async function loadGroups() {
+        const container = document.getElementById('groups-table');
+        const statsEl = document.getElementById('stats');
+        try {
+          const data = await fetchApi('/api/groups');
+          const groups = data.groups;
+          if (!groups.length) {
+            container.innerHTML = '<p class="loading">No groups configured yet</p>';
+            statsEl.innerHTML = '';
+            setDeckMeta({
+              groupsIndexed: 0,
+              lastSync: `${new Date().toLocaleTimeString()} (empty)`,
+            });
+            return;
+          }
+          const totalMembers = groups.reduce((s, g) => s + g.memberCount, 0);
+          const active = groups.filter((g) => g.status === 'ACTIVE').length;
+          setDeckMeta({
+            groupsIndexed: groups.length,
+            lastSync: `${new Date().toLocaleTimeString()} (synced)`,
+          });
+          statsEl.innerHTML = `
           <div class="stat-box"><div class="value">${groups.length}</div><div class="label">Groups</div></div>
           <div class="stat-box"><div class="value">${totalMembers}</div><div class="label">Members</div></div>
           <div class="stat-box"><div class="value">${active}</div><div class="label">Active</div></div>
         `;
-        container.innerHTML = `<table>
+          container.innerHTML = `<table>
           <thead><tr><th>Title</th><th>Chat ID</th><th>Mode</th><th>Status</th><th>P/F/T</th><th>Created</th></tr></thead>
-          <tbody>${groups.map(g => `<tr>
+          <tbody>${groups
+            .map(
+              (g) => `<tr>
             <td><a href="#" onclick="showGroup('${esc(g.id)}'); return false;">${esc(g.title)}</a></td>
             <td class="mono">${esc(g.id)}</td>
             <td>${esc(g.mode)}</td>
             <td>${badge(g.status)}</td>
             <td>${g.passCount}/${g.failCount}/${g.memberCount}</td>
             <td>${fmtDate(g.createdAt)}</td>
-          </tr>`).join('')}</tbody>
+          </tr>`
+            )
+            .join('')}</tbody>
         </table>`;
-      } catch (e) {
-        container.innerHTML = `<div class="error-msg">Failed to load groups: ${esc(e.message)}</div>`;
+        } catch (e) {
+          container.innerHTML = `<div class="error-msg">Failed to load groups: ${esc(e.message)}</div>`;
+          setDeckMeta({
+            groupsIndexed: '-',
+            lastSync: `${new Date().toLocaleTimeString()} (error)`,
+          });
+        }
       }
-    }
 
-    // ── Group Detail ───────────────────────────────
-    async function showGroup(id) {
-      document.getElementById('list-view').style.display = 'none';
-      document.getElementById('detail-view').style.display = 'block';
-      const el = document.getElementById('detail-content');
-      el.innerHTML = '<div class="loading">Loading...</div>';
-      try {
-        const data = await fetchApi(`/api/groups/${id}`);
-        const { group, rule, members, logs, stats } = data;
-        let html = `<div class="card"><h2>${esc(group.title)}</h2>
+      // ── Group Detail ───────────────────────────────
+      async function showGroup(id) {
+        document.getElementById('list-view').style.display = 'none';
+        document.getElementById('detail-view').style.display = 'block';
+        const el = document.getElementById('detail-content');
+        el.innerHTML = '<div class="loading">Loading...</div>';
+        try {
+          const data = await fetchApi(`/api/groups/${id}`);
+          const { group, rule, members, logs, stats } = data;
+          let html = `<div class="card"><h2>${esc(group.title)}</h2>
           <p>Mode: ${esc(group.mode)} | Status: ${badge(group.status)}</p>`;
-        if (rule) {
-          html += `<p>Gate: ${esc(rule.gateType)} | Token: <span class="mono">${esc(rule.tokenId.substring(0,12))}...</span>
+          if (rule) {
+            html += `<p>Gate: ${esc(rule.gateType)} | Token: <span class="mono">${esc(rule.tokenId.substring(0, 12))}...</span>
             | Min: ${rule.gateType === 'FT' ? rule.minAmountBase : rule.minNftCount}
             | Recheck: ${rule.recheckIntervalSec}s | Grace: ${rule.gracePeriodSec}s</p>`;
-        }
-        html += '</div>';
+          }
+          html += '</div>';
 
-        html += `<div class="card"><h2>Members (${data.filters.totalCount})</h2><table>
+          html += `<div class="card"><h2>Members (${data.filters.totalCount})</h2><table>
           <thead><tr><th>User</th><th>State</th><th>Balance</th><th>Last Check</th><th>Enforced</th></tr></thead>
-          <tbody>${members.map(m => `<tr>
+          <tbody>${members
+            .map(
+              (m) => `<tr>
             <td>${esc(m.username || m.firstName || m.tgUserId)}</td>
             <td>${badge(m.state)}</td>
             <td class="mono">${esc(m.lastBalanceBase || '-')}</td>
             <td>${fmtDate(m.lastCheckedAt)}</td>
             <td>${esc(m.enforced)}</td>
-          </tr>`).join('')}</tbody></table></div>`;
+          </tr>`
+            )
+            .join('')}</tbody></table></div>`;
 
-        html += `<div class="card"><h2>Recent Logs</h2><table>
+          html += `<div class="card"><h2>Recent Logs</h2><table>
           <thead><tr><th>Type</th><th>User</th><th>Time</th></tr></thead>
-          <tbody>${logs.slice(0, 20).map(l => `<tr>
+          <tbody>${logs
+            .slice(0, 20)
+            .map(
+              (l) => `<tr>
             <td>${badge(l.type)}</td>
             <td class="mono">${esc(l.tgUserId || '-')}</td>
             <td>${fmtDate(l.createdAt)}</td>
-          </tr>`).join('')}</tbody></table></div>`;
+          </tr>`
+            )
+            .join('')}</tbody></table></div>`;
 
-        el.innerHTML = html;
-      } catch (e) {
-        el.innerHTML = `<div class="error-msg">Failed: ${esc(e.message)}</div>`;
-      }
-    }
-
-    function showList() {
-      document.getElementById('list-view').style.display = 'block';
-      document.getElementById('detail-view').style.display = 'none';
-    }
-
-    function refresh() { checkHealth(); loadGroups(); }
-
-    // ── Init ───────────────────────────────────────
-    async function init() {
-      await checkHealth();
-
-      if (authEnabled === false) {
-        // Auth not enabled — show dashboard directly
-        document.getElementById('no-auth-msg').style.display = 'block';
-        showDashboard();
-        return;
-      }
-
-      // Auth enabled: try to restore existing session
-      if (authToken) {
-        const valid = await tryRestoreSession();
-        if (valid) {
-          showDashboard();
-          return;
+          el.innerHTML = html;
+        } catch (e) {
+          el.innerHTML = `<div class="error-msg">Failed: ${esc(e.message)}</div>`;
         }
       }
 
-      // No valid session — show login
-      showLoginView();
-    }
+      function showList() {
+        document.getElementById('list-view').style.display = 'block';
+        document.getElementById('detail-view').style.display = 'none';
+      }
 
-    init();
-    setInterval(checkHealth, 30000);
-  </script>
-</body>
+      function refresh() {
+        checkHealth();
+        loadGroups();
+      }
+
+      // ── Init ───────────────────────────────────────
+      async function init() {
+        setDeckMeta({
+          apiBase: API_BASE,
+          authMode: 'Detecting...',
+          lastSync: 'Booting...',
+          groupsIndexed: '-',
+        });
+        await checkHealth();
+
+        if (authEnabled === false) {
+          // Auth not enabled — show dashboard directly
+          document.getElementById('no-auth-msg').style.display = 'block';
+          showDashboard();
+          return;
+        }
+
+        // Auth enabled: try to restore existing session
+        if (authToken) {
+          const valid = await tryRestoreSession();
+          if (valid) {
+            showDashboard();
+            return;
+          }
+        }
+
+        // No valid session — show login
+        showLoginView();
+      }
+
+      init();
+      setInterval(checkHealth, 30000);
+    </script>
+  </body>
 </html>
