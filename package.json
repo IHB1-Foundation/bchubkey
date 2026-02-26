@@ -21,7 +21,12 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "demo": "tsx scripts/demo.ts",
     "demo:reset": "tsx scripts/demo-reset.ts",
-    "test:security": "tsx tests/auth-security.test.ts"
+    "test:security": "tsx tests/auth-security.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:live": "playwright test tests/e2e/live-deploy.spec.ts",
+    "test:e2e:mock": "playwright test tests/e2e/mock-coverage.spec.ts"
   },
   "dependencies": {
     "@bitauth/libauth": "^3.0.0",
@@ -37,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.11.0",
     "@types/ws": "^8.18.1",
     "eslint": "^9.0.0",
